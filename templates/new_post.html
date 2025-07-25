@@ -620,13 +620,22 @@ function addSectionToList() {
     document.getElementById('sectionBackground').value = '';
 }
 
+// 파일 업로드 초기화 상태 추적
+let fileUploadInitialized = false;
+
 // 미디어 추가 함수
 function addMedia() {
     const modal = new bootstrap.Modal(document.getElementById('mediaModal'));
     modal.show();
     
-    // 파일 드래그 앤 드롭 및 선택 기능 초기화
-    initializeFileUpload();
+    // 파일 업로드 기능을 한 번만 초기화
+    if (!fileUploadInitialized) {
+        initializeFileUpload();
+        fileUploadInitialized = true;
+    }
+    
+    // 모달이 열릴 때마다 UI만 초기화
+    resetFileUploadUI();
 }
 
 // 파일 업로드 기능 초기화
@@ -742,18 +751,18 @@ function initializeFileUpload() {
             } else {
                 // 업로드 실패
                 alert('파일 업로드 실패: ' + data.error);
-                resetFileUploadUI();
+                resetFileUploadUIInternal();
             }
         })
         .catch(error => {
             console.error('업로드 오류:', error);
             alert('파일 업로드 중 오류가 발생했습니다.');
-            resetFileUploadUI();
+            resetFileUploadUIInternal();
         });
     }
     
-    // 파일 업로드 UI 초기화
-    function resetFileUploadUI() {
+    // 내부 UI 초기화 함수 (initializeFileUpload 내부에서만 사용)
+    function resetFileUploadUIInternal() {
         fileDropContent.style.display = 'block';
         selectedFileInfo.style.display = 'none';
         mediaUrlInput.value = '';
@@ -767,6 +776,21 @@ function initializeFileUpload() {
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+}
+
+// 전역 파일 업로드 UI 초기화 함수
+function resetFileUploadUI() {
+    const fileDropContent = document.querySelector('.file-drop-content');
+    const selectedFileInfo = document.getElementById('selectedFileInfo');
+    const mediaUrlInput = document.getElementById('mediaUrl');
+    const fileInput = document.getElementById('mediaFile');
+    
+    if (fileDropContent && selectedFileInfo && mediaUrlInput && fileInput) {
+        fileDropContent.style.display = 'block';
+        selectedFileInfo.style.display = 'none';
+        mediaUrlInput.value = '';
+        fileInput.value = '';
     }
 }
 
@@ -797,16 +821,9 @@ function addMediaToList() {
     
     // 폼 초기화
     document.getElementById('mediaTitle').value = '';
-    document.getElementById('mediaUrl').value = '';
-    document.getElementById('mediaFile').value = '';
     
-    // UI 초기화
-    const fileDropContent = document.querySelector('.file-drop-content');
-    const selectedFileInfo = document.getElementById('selectedFileInfo');
-    if (fileDropContent && selectedFileInfo) {
-        fileDropContent.style.display = 'block';
-        selectedFileInfo.style.display = 'none';
-    }
+    // UI 초기화 (전역 함수 사용)
+    resetFileUploadUI();
 }
 
 // 드래그 앤 드롭으로 찬양 순서 변경 (위의 initializeSortable에서 처리)

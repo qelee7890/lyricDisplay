@@ -873,75 +873,116 @@ def edit_hymn(hymn_number):
         try:
             # hymnInfo.csv 파일 업데이트
             import csv
-            import tempfile
             import shutil
+            from functions import findTargetDirPath
             
-            # 임시 파일 생성
-            temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, encoding='utf-8')
+            # CSV 파일 경로를 일관되게 처리
+            csv_path = os.path.normpath(os.path.join(findTargetDirPath("dist/hymn"), "hymnInfo.csv"))
+            
+            # 백업 파일 생성
+            backup_path = csv_path + '.backup'
+            if os.path.exists(csv_path):
+                shutil.copy2(csv_path, backup_path)
             
             # 기존 CSV 파일 읽기
-            csv_file = openTextFile("dist/hymn", "hymnInfo.csv", "r")
-            reader = csv.reader(csv_file)
-            writer = csv.writer(temp_file)
-            
+            csv_data = []
             updated = False
-            for row in reader:
-                if len(row) >= 3 and row[0] == str(hymn_number):
-                    # 해당 찬송가 정보 업데이트
-                    writer.writerow([row[0], new_number, new_title])
-                    updated = True
-                else:
-                    writer.writerow(row)
             
-            csv_file.close()
-            temp_file.close()
-            
-            # 원본 파일을 임시 파일로 교체
-            from functions import findTargetDirPath
-            csv_path = os.path.join(findTargetDirPath("dist/hymn"), "hymnInfo.csv")
-            shutil.move(temp_file.name, csv_path)
-            
-            # hymn.txt 파일 읽기
-            hymnfile = openTextFile("dist/hymn", "hymn.txt", "r")
-            content = hymnfile.read()
-            hymnfile.close()
-            
-            # 기존 찬송가 내용 찾기
-            start_marker = f"<{hymn_number}장>"
-            
-            start_pos = content.find(start_marker)
-            
-            if start_pos == -1:
-                flash('찬송가를 찾을 수 없습니다.', 'error')
+            try:
+                with open(csv_path, 'r', encoding='utf-8') as csv_file:
+                    reader = csv.reader(csv_file)
+                    for row in reader:
+                        if len(row) >= 3 and row[0] == str(hymn_number):
+                            # 해당 찬송가 정보 업데이트
+                            csv_data.append([row[0], new_number, new_title] + row[3:])  # 나머지 컬럼 보존
+                            updated = True
+                        else:
+                            csv_data.append(row)
+                            
+                if not updated:
+                    raise ValueError(f"찬송가 {hymn_number}장을 찾을 수 없습니다.")
+                    
+            except Exception as e:
+                flash(f'CSV 파일 읽기 오류: {str(e)}', 'error')
                 return redirect(url_for('search'))
             
-            # 가사 시작 위치 (마커 다음 줄부터)
-            lyrics_start = content.find('\n', start_pos) + 1
-            if lyrics_start == 0:  # 줄바꿈을 찾지 못한 경우
-                lyrics_start = start_pos + len(start_marker)
+            # 새로운 내용으로 CSV 파일 쓰기
+            try:
+                with open(csv_path, 'w', encoding='utf-8', newline='') as csv_file:
+                    writer = csv.writer(csv_file)
+                    writer.writerows(csv_data)
+                    
+                # 백업 파일 삭제 (성공적으로 저장된 경우)
+                if os.path.exists(backup_path):
+                    os.remove(backup_path)
+                    
+            except Exception as e:
+                # 오류 발생 시 백업에서 복원
+                if os.path.exists(backup_path):
+                    shutil.move(backup_path, csv_path)
+                flash(f'CSV 파일 저장 오류: {str(e)}', 'error')
+                return redirect(url_for('search'))
             
+            # hymn.txt 파일 처리
+            hymn_path = os.path.normpath(os.path.join(findTargetDirPath("dist/hymn"), "hymn.txt"))
+            hymn_backup_path = hymn_path + '.backup'
             
-            # 다음 찬송가 마커 찾기 - 더 넓은 범위로 검색
-            end_pos = len(content)  # 기본값: 파일 끝
-            
-            # 다음 찬송가들을 찾기 위해 더 넓은 범위 검색
-            for i in range(hymn_number + 1, hymn_number + 50):  # 최대 50개 찬송가까지 확인
-                next_marker = f"<{i}장>"
-                next_pos = content.find(next_marker, lyrics_start)
-                if next_pos != -1:
-                    end_pos = next_pos
-                    break
-            
-            # 새로운 가사를 원본 형식으로 변환
-            formatted_lyrics = convert_lyrics_to_original_format(new_lyrics)
-            
-            # 새로운 가사로 교체 (마커는 유지하고 가사 부분만 교체)
-            new_content = content[:lyrics_start] + formatted_lyrics + "\n" + content[end_pos:]
-            
-            # 파일에 저장
-            hymnfile = openTextFile("dist/hymn", "hymn.txt", "w")
-            hymnfile.write(new_content)
-            hymnfile.close()
+            try:
+                # hymn.txt 파일 백업
+                if os.path.exists(hymn_path):
+                    shutil.copy2(hymn_path, hymn_backup_path)
+                
+                # hymn.txt 파일 읽기
+                with open(hymn_path, 'r', encoding='utf-8') as hymnfile:
+                    content = hymnfile.read()
+                
+                # 기존 찬송가 내용 찾기
+                start_marker = f"<{hymn_number}장>"
+                start_pos = content.find(start_marker)
+                
+                if start_pos == -1:
+                    # 백업 파일 삭제
+                    if os.path.exists(hymn_backup_path):
+                        os.remove(hymn_backup_path)
+                    flash('hymn.txt에서 찬송가를 찾을 수 없습니다.', 'error')
+                    return redirect(url_for('search'))
+                
+                # 가사 시작 위치 (마커 다음 줄부터)
+                lyrics_start = content.find('\n', start_pos) + 1
+                if lyrics_start == 0:  # 줄바꿈을 찾지 못한 경우
+                    lyrics_start = start_pos + len(start_marker)
+                
+                # 다음 찬송가 마커 찾기 - 더 넓은 범위로 검색
+                end_pos = len(content)  # 기본값: 파일 끝
+                
+                # 다음 찬송가들을 찾기 위해 더 넓은 범위 검색
+                for i in range(hymn_number + 1, hymn_number + 50):  # 최대 50개 찬송가까지 확인
+                    next_marker = f"<{i}장>"
+                    next_pos = content.find(next_marker, lyrics_start)
+                    if next_pos != -1:
+                        end_pos = next_pos
+                        break
+                
+                # 새로운 가사를 원본 형식으로 변환
+                formatted_lyrics = convert_lyrics_to_original_format(new_lyrics)
+                
+                # 새로운 가사로 교체 (마커는 유지하고 가사 부분만 교체)
+                new_content = content[:lyrics_start] + formatted_lyrics + "\n" + content[end_pos:]
+                
+                # 파일에 저장
+                with open(hymn_path, 'w', encoding='utf-8') as hymnfile:
+                    hymnfile.write(new_content)
+                
+                # 백업 파일 삭제 (성공적으로 저장된 경우)
+                if os.path.exists(hymn_backup_path):
+                    os.remove(hymn_backup_path)
+                    
+            except Exception as e:
+                # 오류 발생 시 백업에서 복원
+                if os.path.exists(hymn_backup_path):
+                    shutil.move(hymn_backup_path, hymn_path)
+                flash(f'hymn.txt 파일 처리 오류: {str(e)}', 'error')
+                return redirect(url_for('search'))
             
             flash('찬송가 정보가 성공적으로 수정되었습니다!', 'success')
         except Exception as e:
@@ -955,9 +996,11 @@ def edit_hymn(hymn_number):
     # 기존 가사 가져오기
     lyrics = ""
     try:
-        hymnfile = openTextFile("dist/hymn", "hymn.txt", "r")
-        korLyric, engLyric = classifyLyric(str(hymn_number), hymnfile)
-        hymnfile.close()
+        from functions import findTargetDirPath, classifyLyric
+        hymn_path = os.path.normpath(os.path.join(findTargetDirPath("dist/hymn"), "hymn.txt"))
+        
+        with open(hymn_path, 'r', encoding='utf-8') as hymnfile:
+            korLyric, engLyric = classifyLyric(str(hymn_number), hymnfile)
         
         # 가사를 텍스트로 변환
         # 숫자 키들을 먼저 정렬하고, 후렴은 맨 뒤에
