@@ -1,0 +1,1205 @@
+{% extends "base.html" %}
+
+{% block title %}찬양 순서 수정{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-edit"></i> 찬양 순서 수정</h1>
+            <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 돌아가기
+            </a>
+        </div>
+    </div>
+</div>
+
+<form method="POST" id="praiseForm">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 왼쪽 컬럼: 찬양 순서 작성 영역 -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="title" class="form-label">제목</label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ post.title }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="content" class="form-label">설명</label>
+                    <textarea class="form-control" id="content" name="content" rows="3" placeholder="찬양 순서에 대한 설명을 입력하세요...">{{ post.content }}</textarea>
+                </div>
+
+                <!-- 찬양 순서 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> 찬양 순서</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="songList">
+                            <p class="text-muted">찬양을 검색하여 추가하세요.</p>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-outline-secondary me-2" onclick="addSection()">
+                                <i class="fas fa-list"></i> 찬양 목록 추가
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="addMedia()">
+                                <i class="fas fa-image"></i> 미디어 추가
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 프레젠테이션 설정 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-palette"></i> 프레젠테이션 설정</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="backgroundImage" class="form-label">전체 배경 이미지</label>
+                            <select class="form-select" id="backgroundImage" name="background_image">
+                                <option value="" {{ 'selected' if not post.background_image else '' }}>기본 배경</option>
+                                <option value="dist/wallpaper/voyage_of_life-1.jpg" {{ 'selected' if post.background_image == 'dist/wallpaper/voyage_of_life-1.jpg' else '' }}>Voyage of Life 1</option>
+                                <option value="dist/wallpaper/voyage_of_life-2.jpg" {{ 'selected' if post.background_image == 'dist/wallpaper/voyage_of_life-2.jpg' else '' }}>Voyage of Life 2</option>
+                                <option value="dist/wallpaper/voyage_of_life-3.jpg" {{ 'selected' if post.background_image == 'dist/wallpaper/voyage_of_life-3.jpg' else '' }}>Voyage of Life 3</option>
+                                <option value="dist/wallpaper/prayer-bible.jpg" {{ 'selected' if post.background_image == 'dist/wallpaper/prayer-bible.jpg' else '' }}>Prayer Bible</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="parallaxImage" class="form-label">패럴랙스 배경 이미지</label>
+                            <select class="form-select" id="parallaxImage" name="parallax_image">
+                                <option value="" {{ 'selected' if not post.parallax_image else '' }}>패럴랙스 없음</option>
+                                <option value="dist/wallpaper/Sea-beach-grass-sky_1920x800.jpg" {{ 'selected' if post.parallax_image == 'dist/wallpaper/Sea-beach-grass-sky_1920x800.jpg' else '' }}>Sea Beach</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 오른쪽 컬럼: 찬양 검색 (고정 위치) -->
+            <div class="col-md-6">
+                <div class="search-sidebar-fixed">
+                    <div class="card search-card-sticky">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-search"></i> 찬양 검색</h5>
+                        </div>
+                        <div class="card-body d-flex flex-column p-3">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" id="searchInput" placeholder="찬양 제목 또는 번호 검색...">
+                            </div>
+                            <div id="searchResults" class="search-results-container-sticky"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> 취소
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 수정 완료
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="hidden" name="songs" id="songsData">
+</form>
+
+
+<!-- 찬양 목록 섹션 추가 모달 -->
+<div class="modal fade" id="sectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">찬양 목록 섹션 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">섹션 제목</label>
+                    <input type="text" class="form-control" id="sectionTitle" placeholder="예: 찬양순서1, 여는찬양, 특별찬양" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">배경 이미지 (선택사항)</label>
+                    <select class="form-select" id="sectionBackground">
+                        <option value="">배경 없음</option>
+                        <option value="dist/wallpaper/voyage_of_life-1.jpg">Voyage of Life 1</option>
+                        <option value="dist/wallpaper/voyage_of_life-2.jpg">Voyage of Life 2</option>
+                        <option value="dist/wallpaper/voyage_of_life-3.jpg">Voyage of Life 3</option>
+                        <option value="dist/wallpaper/prayer-bible.jpg">Prayer Bible</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="addSectionToList()">추가</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 미디어 추가 모달 -->
+<div class="modal fade" id="mediaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">미디어 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">미디어 유형</label>
+                    <select class="form-select" id="mediaType">
+                        <option value="image">이미지</option>
+                        <option value="video">동영상</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">제목</label>
+                    <input type="text" class="form-control" id="mediaTitle" placeholder="미디어 제목" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">파일 선택</label>
+                    <div class="file-drop-area border rounded p-4 text-center" id="fileDropArea" style="border: 2px dashed #ddd; background-color: #f8f9fa; cursor: pointer; transition: all 0.3s ease;">
+                        <div class="file-drop-content">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <p class="mb-2">파일을 여기에 드래그 앤 드롭하거나 클릭하여 선택하세요</p>
+                            <input type="file" id="mediaFile" style="display: none;" accept="image/*,video/*">
+                        </div>
+                        <div class="selected-file-info" id="selectedFileInfo" style="display: none;">
+                            <i class="fas fa-file fa-2x text-success mb-2"></i>
+                            <p class="mb-0 font-weight-bold" id="selectedFileName"></p>
+                            <small class="text-muted" id="selectedFileSize"></small>
+                        </div>
+                    </div>
+                    <input type="hidden" id="mediaUrl" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="addMediaToList()">추가</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.sortable-list {
+    min-height: 50px;
+}
+
+.sortable-item {
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.sortable-item:hover {
+    background-color: #f8f9fa;
+}
+
+.sortable-item.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-item.sortable-chosen {
+    background-color: #e3f2fd;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #6c757d;
+    margin-right: 10px;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.search-results-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+}
+
+.search-results-container:empty {
+    border: none;
+    background-color: transparent;
+}
+
+.search-results-container h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-results-container h6:first-child {
+    margin-top: 0;
+}
+
+.search-results-container .border.rounded {
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.search-results-container .border.rounded:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.search-card-fixed {
+    height: 500px !important;
+    max-height: 500px !important;
+    overflow: hidden !important;
+}
+
+.search-results-container-fixed {
+    height: 380px !important;
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    flex-shrink: 0 !important;
+}
+
+.search-results-container-fixed:empty {
+    border: none;
+    background-color: transparent;
+}
+
+.search-results-container-fixed h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-results-container-fixed h6:first-child {
+    margin-top: 0;
+}
+
+.search-results-container-fixed .border.rounded {
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.search-results-container-fixed .border.rounded:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Sticky 검색 사이드바 */
+.search-sidebar-fixed {
+    position: sticky;
+    top: 20px;
+    z-index: 1000;
+}
+
+.search-card-sticky {
+    height: calc(100vh - 40px);
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-card-sticky .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.search-results-container-sticky {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    min-height: 0;
+}
+
+.search-results-container-sticky:empty {
+    border: none;
+    background-color: transparent;
+}
+
+.search-results-container-sticky h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-results-container-sticky h6:first-child {
+    margin-top: 0;
+}
+
+.search-results-container-sticky .border.rounded {
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.search-results-container-sticky .border.rounded:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 모바일 반응형 */
+@media (max-width: 767px) {
+    .search-sidebar-fixed {
+        position: relative;
+        top: auto;
+    }
+    
+    .search-card-sticky {
+        height: 400px;
+        max-height: 400px;
+    }
+    
+    .search-card-fixed {
+        height: 400px !important;
+        max-height: 400px !important;
+    }
+    
+    .search-results-container-fixed {
+        height: 280px !important;
+        max-height: 280px !important;
+    }
+}
+
+/* 파일 선택 영역 스타일 개선 */
+.file-drop-area {
+    cursor: pointer !important;
+}
+
+.selected-file-info {
+    cursor: pointer !important;
+}
+
+.selected-file-info:hover {
+    background-color: #e3f2fd !important;
+    border-color: #007bff !important;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<!-- SortableJS CDN for drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+// 기존 찬양 목록으로 초기화
+let songs = [];
+
+// 서버에서 안전하게 전달된 JSON 데이터 사용
+try {
+    {% if songs_json %}
+        console.log('Loading songs from safe JSON data...');
+        const songsJsonString = {{ songs_json|safe }};
+        console.log('Raw JSON string:', songsJsonString);
+        
+        if (typeof songsJsonString === 'string') {
+            songs = JSON.parse(songsJsonString);
+        } else if (Array.isArray(songsJsonString)) {
+            songs = songsJsonString;
+        } else {
+            console.warn('Unexpected songs data format:', typeof songsJsonString);
+            songs = [];
+        }
+        
+        console.log('Successfully loaded', songs.length, 'songs');
+        console.log('Loaded songs:', songs);
+    {% else %}
+        console.log('No songs JSON data available');
+        songs = [];
+    {% endif %}
+} catch (error) {
+    console.error('Error loading songs data:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // 안전하게 빈 배열로 초기화
+    songs = [];
+    
+    // 사용자에게 알림
+    setTimeout(() => {
+        if (typeof showToast === 'function') {
+            showToast('찬양 데이터 로드 중 오류가 발생했습니다. 페이지를 새로고침해보세요.', 'warning');
+        } else {
+            alert('찬양 데이터 로드 중 오류가 발생했습니다. 페이지를 새로고침해보세요.');
+        }
+    }, 1000);
+}
+
+// 최종 데이터 검증
+if (!Array.isArray(songs)) {
+    console.warn('Songs is not an array after initialization, forcing to empty array');
+    songs = [];
+}
+
+
+// 페이지 로드 시 기존 찬양 목록 표시
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== PAGE LOADED ===');
+    console.log('Initial songs data:', songs);
+    console.log('Number of songs loaded:', songs ? songs.length : 0);
+    
+    // 각 song 객체 검증
+    if (songs && Array.isArray(songs)) {
+        songs.forEach((song, index) => {
+            console.log(`Song ${index + 1}:`, song);
+        });
+    } else {
+        console.warn('Songs is not an array or is empty!');
+        songs = []; // 안전을 위해 빈 배열로 초기화
+    }
+    
+    console.log('Final songs array before updateSongList:', songs);
+    console.log('Calling updateSongList...');
+    
+    updateSongList();
+    
+    console.log('updateSongList call completed');
+});
+
+// 검색 기능 (IME 지원)
+let isComposingSearch = false;
+
+document.getElementById('searchInput').addEventListener('compositionstart', function() {
+    isComposingSearch = true;
+});
+
+document.getElementById('searchInput').addEventListener('compositionupdate', function() {
+    const query = this.value.trim();
+    if (query.length > 0) {
+        searchSongs(query);
+    } else {
+        document.getElementById('searchResults').innerHTML = '';
+    }
+});
+
+document.getElementById('searchInput').addEventListener('compositionend', function() {
+    isComposingSearch = false;
+    const query = this.value.trim();
+    if (query.length > 0) {
+        searchSongs(query);
+    } else {
+        document.getElementById('searchResults').innerHTML = '';
+    }
+});
+
+document.getElementById('searchInput').addEventListener('input', function() {
+    if (isComposingSearch) return; // IME 조합 중이면 무시
+    
+    const query = this.value.trim();
+    if (query.length > 0) {
+        searchSongs(query);
+    } else {
+        document.getElementById('searchResults').innerHTML = '';
+    }
+});
+
+function searchSongs(query) {
+    fetch(`/search?q=${encodeURIComponent(query)}`, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            displaySearchResults(data);
+        })
+        .catch(error => {
+            console.error('검색 오류:', error);
+        });
+}
+
+function displaySearchResults(data) {
+    const resultsDiv = document.getElementById('searchResults');
+    let html = '';
+    
+    if (data.hymn_results && data.hymn_results.length > 0) {
+        html += '<h6>찬송가</h6>';
+        data.hymn_results.forEach(hymn => {
+            html += `<div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                <div>
+                    <strong>${hymn.number}장</strong> - ${hymn.title}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addHymn('${hymn.number}', '${hymn.title}')">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>`;
+        });
+    }
+    
+    if (data.ccm_results && data.ccm_results.length > 0) {
+        html += '<h6>CCM</h6>';
+        data.ccm_results.forEach(ccm => {
+            html += `<div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                <div>
+                    <strong>${ccm.song_title}</strong>
+                    <small class="text-muted d-block">${ccm.image_count}</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCCM('${ccm.song_title}')">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>`;
+        });
+    }
+    
+    if (html === '') {
+        html = '<div class="text-center p-3"><i class="fas fa-search text-muted mb-2"></i><p class="text-muted mb-0">검색 결과가 없습니다.</p></div>';
+    }
+    
+    resultsDiv.innerHTML = html;
+}
+
+function addHymn(number, title) {
+    const song = {
+        title: title,
+        type: 'hymn',
+        hymn_number: number,
+        lyrics: ''
+    };
+    addSongToList(song);
+}
+
+function addCCM(title) {
+    const song = {
+        title: title,
+        type: 'ccm',
+        lyrics: ''
+    };
+    addSongToList(song);
+}
+
+function addSongToList(song) {
+    songs.push(song);
+    updateSongList();
+}
+
+function updateSongList() {
+    console.log('=== updateSongList function called ===');
+    console.log('Current songs:', songs);
+    console.log('Songs length:', songs ? songs.length : 'N/A');
+    
+    const songListDiv = document.getElementById('songList');
+    console.log('Song list div element:', songListDiv);
+    
+    // songListDiv 요소가 없으면 함수 종료
+    if (!songListDiv) {
+        console.error('songList element not found!');
+        return;
+    }
+    
+    // songs 배열 안전성 검증
+    if (!songs || !Array.isArray(songs)) {
+        console.warn('Songs is not an array, initializing as empty array');
+        songs = [];
+    }
+    
+    // 각 song 객체의 유효성 검증
+    songs = songs.filter(song => {
+        if (!song || typeof song !== 'object') {
+            console.warn('Invalid song object found and removed:', song);
+            return false;
+        }
+        if (!song.title || typeof song.title !== 'string') {
+            console.warn('Song without valid title found and removed:', song);
+            return false;
+        }
+        if (!song.type || typeof song.type !== 'string') {
+            console.warn('Song without valid type found and removed:', song);
+            return false;
+        }
+        return true;
+    });
+    
+    if (songs.length === 0) {
+        console.log('No valid songs found, showing default message');
+        songListDiv.innerHTML = '<p class="text-muted">찬양을 검색하여 추가하세요.</p>';
+        return;
+    }
+    
+    console.log(`Found ${songs.length} songs, building list...`);
+    
+    console.log('Building HTML for songs...');
+    let html = '<div id="sortableList" class="list-group sortable-list">';
+    songs.forEach((song, index) => {
+        console.log(`Processing song ${index + 1}:`, song);
+        
+        // 이미 필터링 되었으므로 추가 검증 불필요하지만 안전장치로 유지
+        if (!song || typeof song !== 'object' || !song.title || !song.type) {
+            console.error(`Song ${index + 1} failed validation:`, song);
+            return;
+        }
+        
+        let icon = 'music';
+        let typeText = '';
+        
+        if (song.type === 'hymn') {
+            icon = 'music';
+            typeText = `${song.hymn_number || ''}장. `;
+        } else if (song.type === 'ccm') {
+            icon = 'play';
+        } else if (song.type === 'section') {
+            icon = 'list';
+            typeText = '[목록] ';
+        } else if (song.type === 'media') {
+            icon = song.media_type === 'video' ? 'video' : 'image';
+            typeText = `[${song.media_type === 'video' ? '동영상' : '이미지'}] `;
+        }
+        
+        // HTML 이스케이프 처리
+        const escapedTitle = song.title.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        
+        let editButton = '';
+        if (song.type === 'section') {
+            editButton = `<button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="editSection(${index})" title="수정">
+                <i class="fas fa-edit"></i>
+            </button>`;
+        } else if (song.type === 'media') {
+            editButton = `<button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="editMedia(${index})" title="수정">
+                <i class="fas fa-edit"></i>
+            </button>`;
+        }
+        
+        const songHtml = `<div class="list-group-item d-flex justify-content-between align-items-center sortable-item" data-index="${index}">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-grip-vertical drag-handle"></i>
+                <i class="fas fa-${icon} ms-2"></i>
+                <span class="ms-2">${typeText}${escapedTitle}</span>
+            </div>
+            <div>
+                ${editButton}
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSong(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>`;
+        
+        console.log(`Generated HTML for song ${index + 1}:`, songHtml);
+        html += songHtml;
+    });
+    html += '</div>';
+    
+    console.log('Setting song list HTML:', html);
+    songListDiv.innerHTML = html;
+    console.log('Song list HTML set successfully');
+    
+    // Sortable 초기화
+    console.log('Initializing sortable...');
+    initializeSortable();
+    console.log('=== updateSongList function completed ===');
+}
+
+function initializeSortable() {
+    const sortableList = document.getElementById('sortableList');
+    if (sortableList) {
+        Sortable.create(sortableList, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: function(evt) {
+                // 배열 순서 업데이트
+                const item = songs.splice(evt.oldIndex, 1)[0];
+                songs.splice(evt.newIndex, 0, item);
+                
+                // 리스트 다시 그리기 (인덱스 업데이트를 위해)
+                updateSongList();
+            }
+        });
+    }
+}
+
+function removeSong(index) {
+    songs.splice(index, 1);
+    updateSongList();
+}
+
+// 섹션 수정 함수
+function editSection(index) {
+    const song = songs[index];
+    if (!song || song.type !== 'section') {
+        alert('유효하지 않은 섹션입니다.');
+        return;
+    }
+    
+    // 모달에 기존 값 설정
+    document.getElementById('sectionTitle').value = song.section_title || song.title;
+    document.getElementById('sectionBackground').value = song.background_image || '';
+    
+    // 수정 모드임을 표시하기 위해 데이터 속성 설정
+    const modal = document.getElementById('sectionModal');
+    modal.setAttribute('data-edit-index', index);
+    modal.querySelector('.modal-title').textContent = '찬양 목록 섹션 수정';
+    modal.querySelector('.btn-primary').textContent = '수정 완료';
+    modal.querySelector('.btn-primary').setAttribute('onclick', 'updateSectionInList()');
+    
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+}
+
+// 미디어 수정 함수
+function editMedia(index) {
+    const song = songs[index];
+    if (!song || song.type !== 'media') {
+        alert('유효하지 않은 미디어입니다.');
+        return;
+    }
+    
+    // 모달에 기존 값 설정
+    document.getElementById('mediaType').value = song.media_type || 'image';
+    document.getElementById('mediaTitle').value = song.title;
+    document.getElementById('mediaUrl').value = song.media_url || '';
+    
+    // 파일 정보 표시 (기존 파일이 있는 경우)
+    if (song.media_url) {
+        const fileDropContent = document.querySelector('.file-drop-content');
+        const selectedFileInfo = document.getElementById('selectedFileInfo');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const selectedFileSize = document.getElementById('selectedFileSize');
+        
+        if (fileDropContent && selectedFileInfo && selectedFileName) {
+            fileDropContent.style.display = 'none';
+            selectedFileInfo.style.display = 'block';
+            selectedFileName.textContent = song.media_url.split('/').pop() + ' (기존 파일 - 클릭하여 변경)';
+            selectedFileSize.textContent = '새 파일을 드래그&드롭하거나 클릭하여 선택하세요';
+        }
+    }
+    
+    // 수정 모드임을 표시하기 위해 데이터 속성 설정
+    const modal = document.getElementById('mediaModal');
+    modal.setAttribute('data-edit-index', index);
+    modal.querySelector('.modal-title').textContent = '미디어 수정';
+    modal.querySelector('.btn-primary').textContent = '수정 완료';
+    modal.querySelector('.btn-primary').setAttribute('onclick', 'updateMediaInList()');
+    
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // 파일 업로드 기능 초기화
+    initializeFileUpload();
+}
+
+// 드래그 앤 드롭으로 찬양 순서 변경 (위의 initializeSortable에서 처리)
+
+
+// 찬양 목록 섹션 추가 함수
+function addSection() {
+    const modal = new bootstrap.Modal(document.getElementById('sectionModal'));
+    modal.show();
+}
+
+function addSectionToList() {
+    const title = document.getElementById('sectionTitle').value;
+    const background = document.getElementById('sectionBackground').value;
+    
+    if (!title) {
+        alert('섹션 제목을 입력하세요.');
+        return;
+    }
+    
+    const section = {
+        title: title,
+        type: 'section',
+        section_title: title,
+        background_image: background,
+        lyrics: ''
+    };
+    
+    addSongToList(section);
+    
+    // 모달 닫기 및 초기화
+    closeSectionModal();
+}
+
+// 섹션 수정 완료 함수
+function updateSectionInList() {
+    const title = document.getElementById('sectionTitle').value;
+    const background = document.getElementById('sectionBackground').value;
+    const modal = document.getElementById('sectionModal');
+    const editIndex = parseInt(modal.getAttribute('data-edit-index'));
+    
+    if (!title) {
+        alert('섹션 제목을 입력하세요.');
+        return;
+    }
+    
+    if (editIndex >= 0 && editIndex < songs.length) {
+        // 기존 섹션 수정
+        songs[editIndex].title = title;
+        songs[editIndex].section_title = title;
+        songs[editIndex].background_image = background;
+        
+        // 목록 업데이트
+        updateSongList();
+        
+        // 모달 닫기 및 초기화
+        closeSectionModal();
+    } else {
+        alert('수정할 섹션을 찾을 수 없습니다.');
+    }
+}
+
+// 섹션 모달 닫기 및 초기화
+function closeSectionModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('sectionModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    // 모달 상태 초기화
+    const modalElement = document.getElementById('sectionModal');
+    modalElement.removeAttribute('data-edit-index');
+    modalElement.querySelector('.modal-title').textContent = '찬양 목록 섹션 추가';
+    modalElement.querySelector('.btn-primary').textContent = '추가';
+    modalElement.querySelector('.btn-primary').setAttribute('onclick', 'addSectionToList()');
+    
+    // 폼 초기화
+    document.getElementById('sectionTitle').value = '';
+    document.getElementById('sectionBackground').value = '';
+}
+
+// 미디어 추가 함수
+function addMedia() {
+    const modal = new bootstrap.Modal(document.getElementById('mediaModal'));
+    modal.show();
+    
+    // 파일 드래그 앤 드롭 및 선택 기능 초기화
+    initializeFileUpload();
+}
+
+// 파일 업로드 이벤트 리스너가 이미 초기화되었는지 추적
+let fileUploadInitialized = false;
+
+// 파일 업로드 기능 초기화
+function initializeFileUpload() {
+    const fileDropArea = document.getElementById('fileDropArea');
+    const fileInput = document.getElementById('mediaFile');
+    const mediaUrlInput = document.getElementById('mediaUrl');
+    const fileDropContent = document.querySelector('.file-drop-content');
+    const selectedFileInfo = document.getElementById('selectedFileInfo');
+    const selectedFileName = document.getElementById('selectedFileName');
+    const selectedFileSize = document.getElementById('selectedFileSize');
+    
+    // 이미 초기화되었다면 이벤트 리스너를 다시 추가하지 않음
+    if (fileUploadInitialized) {
+        return;
+    }
+    
+    // 클릭 핸들러
+    const clickHandler = function() {
+        fileInput.click();
+    };
+    
+    // 파일 선택 핸들러
+    const changeHandler = function(e) {
+        console.log('File input change event triggered', e.target.files);
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+            // 같은 파일을 다시 선택할 수 있도록 값 초기화
+            e.target.value = '';
+        }
+    };
+    
+    // 드래그오버 핸들러
+    const dragoverHandler = function(e) {
+        e.preventDefault();
+        fileDropArea.style.borderColor = '#007bff';
+        fileDropArea.style.backgroundColor = '#e3f2fd';
+    };
+    
+    // 드래그리브 핸들러
+    const dragleaveHandler = function(e) {
+        e.preventDefault();
+        fileDropArea.style.borderColor = '#ddd';
+        fileDropArea.style.backgroundColor = '#f8f9fa';
+    };
+    
+    // 드롭 핸들러
+    const dropHandler = function(e) {
+        e.preventDefault();
+        fileDropArea.style.borderColor = '#ddd';
+        fileDropArea.style.backgroundColor = '#f8f9fa';
+        
+        const files = e.dataTransfer.files;
+        console.log('Drop event triggered', files);
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    };
+    
+    // 이벤트 리스너 추가
+    fileDropArea.addEventListener('click', clickHandler);
+    fileInput.addEventListener('change', changeHandler);
+    fileDropArea.addEventListener('dragover', dragoverHandler);
+    fileDropArea.addEventListener('dragleave', dragleaveHandler);
+    fileDropArea.addEventListener('drop', dropHandler);
+    
+    // 초기화 완료 표시
+    fileUploadInitialized = true;
+    console.log('File upload initialized');
+    
+    // 파일 선택 처리 함수
+    function handleFileSelect(file) {
+        console.log('handleFileSelect called with file:', file);
+        
+        // 파일 형식 검증
+        const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        const validVideoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/webm'];
+        
+        if (!validImageTypes.includes(file.type) && !validVideoTypes.includes(file.type)) {
+            console.log('Invalid file type:', file.type);
+            alert('지원되지 않는 파일 형식입니다. 이미지 또는 동영상 파일을 선택해주세요.');
+            return;
+        }
+        
+        // 파일 크기 검증 (50MB 제한)
+        const maxSize = 50 * 1024 * 1024; // 50MB
+        if (file.size > maxSize) {
+            console.log('File too large:', file.size);
+            alert('파일 크기가 너무 큽니다. 50MB 이하의 파일을 선택해주세요.');
+            return;
+        }
+        
+        console.log('File validation passed, proceeding with upload');
+        
+        // 미디어 타입 자동 설정
+        const mediaTypeSelect = document.getElementById('mediaType');
+        if (validImageTypes.includes(file.type)) {
+            mediaTypeSelect.value = 'image';
+        } else if (validVideoTypes.includes(file.type)) {
+            mediaTypeSelect.value = 'video';
+        }
+        
+        // 파일 정보 표시
+        selectedFileName.textContent = `${file.name} (업로드 중...)`;
+        selectedFileSize.textContent = formatFileSize(file.size);
+        
+        // UI 업데이트
+        fileDropContent.style.display = 'none';
+        selectedFileInfo.style.display = 'block';
+        
+        // 제목이 비어있으면 파일명으로 설정 (새로 추가하는 경우만)
+        const titleInput = document.getElementById('mediaTitle');
+        const modal = document.getElementById('mediaModal');
+        const isEditMode = modal.getAttribute('data-edit-index') !== null;
+        
+        if (!titleInput.value && !isEditMode) {
+            titleInput.value = file.name.split('.')[0];
+        }
+        
+        // 실제 파일 업로드
+        uploadFileToServer(file);
+    }
+    
+    // 서버에 파일 업로드하는 함수
+    function uploadFileToServer(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch('/upload_media', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 업로드 성공
+                mediaUrlInput.value = data.file_path;
+                selectedFileName.textContent = `${data.original_name} (업로드 완료)`;
+                console.log('파일 업로드 성공:', data.file_path);
+            } else {
+                // 업로드 실패
+                alert('파일 업로드 실패: ' + data.error);
+                resetFileUploadUI();
+            }
+        })
+        .catch(error => {
+            console.error('업로드 오류:', error);
+            alert('파일 업로드 중 오류가 발생했습니다.');
+            resetFileUploadUI();
+        });
+    }
+    
+    // 파일 업로드 UI 초기화
+    function resetFileUploadUI() {
+        fileDropContent.style.display = 'block';
+        selectedFileInfo.style.display = 'none';
+        mediaUrlInput.value = '';
+        fileInput.value = '';
+    }
+    
+    // 파일 크기 포맷 함수
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+}
+
+function addMediaToList() {
+    const mediaType = document.getElementById('mediaType').value;
+    const title = document.getElementById('mediaTitle').value;
+    const url = document.getElementById('mediaUrl').value;
+    
+    if (!title || !url) {
+        alert('제목과 파일 경로를 모두 입력하세요.');
+        return;
+    }
+    
+    const media = {
+        title: title,
+        type: 'media',
+        media_type: mediaType,
+        media_url: url,
+        background_image: '',
+        lyrics: ''
+    };
+    
+    addSongToList(media);
+    
+    // 모달 닫기 및 초기화
+    closeMediaModal();
+}
+
+// 미디어 수정 완료 함수
+function updateMediaInList() {
+    const mediaType = document.getElementById('mediaType').value;
+    const title = document.getElementById('mediaTitle').value;
+    const url = document.getElementById('mediaUrl').value;
+    const modal = document.getElementById('mediaModal');
+    const editIndex = parseInt(modal.getAttribute('data-edit-index'));
+    
+    if (!title || !url) {
+        alert('제목과 파일 경로를 모두 입력하세요.');
+        return;
+    }
+    
+    if (editIndex >= 0 && editIndex < songs.length) {
+        // 기존 미디어 수정
+        songs[editIndex].title = title;
+        songs[editIndex].media_type = mediaType;
+        songs[editIndex].media_url = url;
+        songs[editIndex].background_image = '';
+        
+        // 목록 업데이트
+        updateSongList();
+        
+        // 모달 닫기 및 초기화
+        closeMediaModal();
+    } else {
+        alert('수정할 미디어를 찾을 수 없습니다.');
+    }
+}
+
+// 미디어 모달 닫기 및 초기화
+function closeMediaModal() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('mediaModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    // 모달 상태 초기화
+    const modalElement = document.getElementById('mediaModal');
+    modalElement.removeAttribute('data-edit-index');
+    modalElement.querySelector('.modal-title').textContent = '미디어 추가';
+    modalElement.querySelector('.btn-primary').textContent = '추가';
+    modalElement.querySelector('.btn-primary').setAttribute('onclick', 'addMediaToList()');
+    
+    // 폼 초기화
+    document.getElementById('mediaTitle').value = '';
+    document.getElementById('mediaUrl').value = '';
+    document.getElementById('mediaFile').value = '';
+    
+    // UI 초기화
+    const fileDropContent = document.querySelector('.file-drop-content');
+    const selectedFileInfo = document.getElementById('selectedFileInfo');
+    if (fileDropContent && selectedFileInfo) {
+        fileDropContent.style.display = 'block';
+        selectedFileInfo.style.display = 'none';
+    }
+    
+    // 파일 업로드 초기화 상태 리셋 (다음 모달 열 때 다시 초기화되도록)
+    fileUploadInitialized = false;
+    console.log('Media modal closed, file upload reset');
+}
+
+
+
+// 폼 제출 시
+document.getElementById('praiseForm').addEventListener('submit', function(e) {
+    console.log('=== FORM SUBMISSION DEBUG ===');
+    console.log('Current songs array:', songs);
+    console.log('Songs array type:', typeof songs);
+    console.log('Songs array is array?', Array.isArray(songs));
+    console.log('Songs array length:', songs ? songs.length : 'N/A');
+    
+    // songs가 undefined이거나 null인 경우 빈 배열로 초기화
+    if (!songs || !Array.isArray(songs)) {
+        console.warn('Songs array was undefined or not an array, initializing as empty array');
+        songs = [];
+    }
+    
+    // 각 song 객체 유효성 재검증
+    songs = songs.filter(song => {
+        return song && typeof song === 'object' && song.title && song.type;
+    });
+    
+    let jsonString;
+    try {
+        jsonString = JSON.stringify(songs);
+        console.log('JSON string to submit:', jsonString);
+        console.log('JSON string length:', jsonString.length);
+    } catch (error) {
+        console.error('Failed to stringify songs:', error);
+        alert('찬양 데이터를 저장하는 중 오류가 발생했습니다.');
+        e.preventDefault();
+        return false;
+    }
+    
+    const songsDataInput = document.getElementById('songsData');
+    console.log('Songs data input element:', songsDataInput);
+    
+    if (songsDataInput) {
+        songsDataInput.value = jsonString;
+        console.log('Set input value to:', songsDataInput.value);
+    } else {
+        console.error('songsData input element not found!');
+        alert('폼 요소를 찾을 수 없습니다. 페이지를 새로고침하고 다시 시도하세요.');
+        e.preventDefault();
+        return false;
+    }
+    
+    console.log('=== END FORM SUBMISSION DEBUG ===');
+});
+</script>
+{% endblock %}

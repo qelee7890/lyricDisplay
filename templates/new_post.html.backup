@@ -1,0 +1,845 @@
+{% extends "base.html" %}
+
+{% block title %}새 찬양 순서 작성{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-edit"></i> 새 찬양 순서 작성</h1>
+        <hr>
+    </div>
+</div>
+
+<form method="POST" id="praiseForm">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 왼쪽 컬럼: 찬양 순서 작성 영역 -->
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="title" class="form-label">제목</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="content" class="form-label">설명</label>
+                    <textarea class="form-control" id="content" name="content" rows="3" placeholder="찬양 순서에 대한 설명을 입력하세요..."></textarea>
+                </div>
+
+                <!-- 찬양 순서 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> 찬양 순서</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="songList">
+                            <p class="text-muted">찬양을 검색하여 추가하세요.</p>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-outline-secondary me-2" onclick="addSection()">
+                                <i class="fas fa-list"></i> 찬양 목록 추가
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="addMedia()">
+                                <i class="fas fa-image"></i> 미디어 추가
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 프레젠테이션 설정 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-palette"></i> 프레젠테이션 설정</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="backgroundImage" class="form-label">시작 배경 이미지</label>
+                            <select class="form-select" id="backgroundImage" name="background_image">
+                                <option value="">기본 배경</option>
+                                <option value="dist/wallpaper/voyage_of_life-1.jpg">Voyage of Life 1</option>
+                                <option value="dist/wallpaper/voyage_of_life-2.jpg">Voyage of Life 2</option>
+                                <option value="dist/wallpaper/voyage_of_life-3.jpg">Voyage of Life 3</option>
+                                <option value="dist/wallpaper/prayer-bible.jpg">Prayer Bible</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="parallaxImage" class="form-label">패럴랙스 배경 이미지</label>
+                            <select class="form-select" id="parallaxImage" name="parallax_image">
+                                <option value="">패럴랙스 없음</option>
+                                <option value="dist/wallpaper/Sea-beach-grass-sky_1920x800.jpg">Sea Beach</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 오른쪽 컬럼: 찬양 검색 (고정 위치) -->
+            <div class="col-md-6">
+                <div class="search-sidebar-fixed">
+                    <div class="card search-card-sticky">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-search"></i> 찬양 검색</h5>
+                        </div>
+                        <div class="card-body d-flex flex-column p-3">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" id="searchInput" placeholder="찬양 제목 또는 번호 검색...">
+                            </div>
+                            <div id="searchResults" class="search-results-container-sticky"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 취소
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 저장
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="hidden" name="songs" id="songsData">
+</form>
+
+
+<!-- 찬양 목록 섹션 추가 모달 -->
+<div class="modal fade" id="sectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">찬양 목록 섹션 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">섹션 제목</label>
+                    <input type="text" class="form-control" id="sectionTitle" placeholder="예: 찬양순서1, 여는찬양, 특별찬양" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">배경 이미지 (선택사항)</label>
+                    <select class="form-select" id="sectionBackground">
+                        <option value="">배경 없음</option>
+                        <option value="dist/wallpaper/voyage_of_life-1.jpg">Voyage of Life 1</option>
+                        <option value="dist/wallpaper/voyage_of_life-2.jpg">Voyage of Life 2</option>
+                        <option value="dist/wallpaper/voyage_of_life-3.jpg">Voyage of Life 3</option>
+                        <option value="dist/wallpaper/prayer-bible.jpg">Prayer Bible</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="addSectionToList()">추가</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 미디어 추가 모달 -->
+<div class="modal fade" id="mediaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">미디어 추가</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">미디어 유형</label>
+                    <select class="form-select" id="mediaType">
+                        <option value="image">이미지</option>
+                        <option value="video">동영상</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">제목</label>
+                    <input type="text" class="form-control" id="mediaTitle" placeholder="미디어 제목" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">파일 선택</label>
+                    <div class="file-drop-area border rounded p-4 text-center" id="fileDropArea" style="border: 2px dashed #ddd; background-color: #f8f9fa; cursor: pointer; transition: all 0.3s ease;">
+                        <div class="file-drop-content">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <p class="mb-2">파일을 여기에 드래그 앤 드롭하거나 클릭하여 선택하세요</p>
+                            <input type="file" id="mediaFile" style="display: none;" accept="image/*,video/*">
+                        </div>
+                        <div class="selected-file-info" id="selectedFileInfo" style="display: none;">
+                            <i class="fas fa-file fa-2x text-success mb-2"></i>
+                            <p class="mb-0 font-weight-bold" id="selectedFileName"></p>
+                            <small class="text-muted" id="selectedFileSize"></small>
+                        </div>
+                    </div>
+                    <input type="hidden" id="mediaUrl" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="addMediaToList()">추가</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.sortable-list {
+    min-height: 50px;
+}
+
+.sortable-item {
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.sortable-item:hover {
+    background-color: #f8f9fa;
+}
+
+.sortable-item.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-item.sortable-chosen {
+    background-color: #e3f2fd;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #6c757d;
+    margin-right: 10px;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.search-results-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+}
+
+.search-results-container:empty {
+    border: none;
+    background-color: transparent;
+}
+
+.search-results-container h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-results-container h6:first-child {
+    margin-top: 0;
+}
+
+.search-results-container .border.rounded {
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.search-results-container .border.rounded:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Sticky 검색 사이드바 */
+.search-sidebar-fixed {
+    position: sticky;
+    top: 20px;
+    z-index: 1000;
+}
+
+.search-card-sticky {
+    height: calc(100vh - 40px);
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-card-sticky .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.search-results-container-sticky {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    min-height: 0;
+}
+
+.search-results-container-sticky:empty {
+    border: none;
+    background-color: transparent;
+}
+
+.search-results-container-sticky h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-results-container-sticky h6:first-child {
+    margin-top: 0;
+}
+
+.search-results-container-sticky .border.rounded {
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.search-results-container-sticky .border.rounded:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 기존 고정 높이 스타일은 유지 (다른 페이지에서 사용할 수 있음) */
+.search-card-fixed {
+    height: 500px !important;
+    max-height: 500px !important;
+    overflow: hidden !important;
+}
+
+.search-results-container-fixed {
+    height: 380px !important;
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    flex-shrink: 0 !important;
+}
+
+.search-results-container-fixed:empty {
+    border: none;
+    background-color: transparent;
+}
+
+.search-results-container-fixed h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.search-results-container-fixed h6:first-child {
+    margin-top: 0;
+}
+
+.search-results-container-fixed .border.rounded {
+    background-color: white;
+    transition: all 0.2s ease;
+}
+
+.search-results-container-fixed .border.rounded:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 모바일 반응형 */
+@media (max-width: 767px) {
+    .search-sidebar-fixed {
+        position: relative;
+        top: auto;
+    }
+    
+    .search-card-sticky {
+        height: 400px;
+        max-height: 400px;
+    }
+    
+    .search-card-fixed {
+        height: 400px !important;
+        max-height: 400px !important;
+    }
+    
+    .search-results-container-fixed {
+        height: 280px !important;
+        max-height: 280px !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<!-- SortableJS CDN for drag and drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+let songs = [];
+
+// 검색 기능 (IME 지원)
+let isComposing = false;
+
+document.getElementById('searchInput').addEventListener('compositionstart', function() {
+    isComposing = true;
+});
+
+document.getElementById('searchInput').addEventListener('compositionupdate', function() {
+    const query = this.value.trim();
+    if (query.length > 0) {
+        searchSongs(query);
+    } else {
+        document.getElementById('searchResults').innerHTML = '';
+    }
+});
+
+document.getElementById('searchInput').addEventListener('compositionend', function() {
+    isComposing = false;
+    const query = this.value.trim();
+    if (query.length > 0) {
+        searchSongs(query);
+    } else {
+        document.getElementById('searchResults').innerHTML = '';
+    }
+});
+
+document.getElementById('searchInput').addEventListener('input', function() {
+    if (isComposing) return; // IME 조합 중이면 무시
+    
+    const query = this.value.trim();
+    if (query.length > 0) {
+        searchSongs(query);
+    } else {
+        document.getElementById('searchResults').innerHTML = '';
+    }
+});
+
+function searchSongs(query) {
+    fetch(`/search?q=${encodeURIComponent(query)}`, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            displaySearchResults(data);
+        })
+        .catch(error => {
+            console.error('검색 오류:', error);
+        });
+}
+
+function displaySearchResults(data) {
+    const resultsDiv = document.getElementById('searchResults');
+    let html = '';
+    
+    if (data.hymn_results && data.hymn_results.length > 0) {
+        html += '<h6>찬송가</h6>';
+        data.hymn_results.forEach(hymn => {
+            html += `<div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                <div>
+                    <strong>${hymn.number}장</strong> - ${hymn.title}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addHymn('${hymn.number}', '${hymn.title}')">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>`;
+        });
+    }
+    
+    if (data.ccm_results && data.ccm_results.length > 0) {
+        html += '<h6>CCM</h6>';
+        data.ccm_results.forEach(ccm => {
+            html += `<div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                <div>
+                    <strong>${ccm.song_title}</strong>
+                    <small class="text-muted d-block">${ccm.image_count}</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCCM('${ccm.song_title}')">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>`;
+        });
+    }
+    
+    if (html === '') {
+        html = '<div class="text-center p-3"><i class="fas fa-search text-muted mb-2"></i><p class="text-muted mb-0">검색 결과가 없습니다.</p></div>';
+    }
+    
+    resultsDiv.innerHTML = html;
+}
+
+function addHymn(number, title) {
+    const song = {
+        title: title,
+        type: 'hymn',
+        hymn_number: number,
+        lyrics: ''
+    };
+    addSongToList(song);
+}
+
+function addCCM(title) {
+    const song = {
+        title: title,
+        type: 'ccm',
+        lyrics: ''
+    };
+    addSongToList(song);
+}
+
+function addSongToList(song) {
+    songs.push(song);
+    updateSongList();
+}
+
+function updateSongList() {
+    const songListDiv = document.getElementById('songList');
+    
+    if (songs.length === 0) {
+        songListDiv.innerHTML = '<p class="text-muted">찬양을 검색하여 추가하세요.</p>';
+        return;
+    }
+    
+    let html = '<div id="sortableList" class="list-group sortable-list">';
+    songs.forEach((song, index) => {
+        let icon = 'music';
+        let typeText = '';
+        
+        if (song.type === 'hymn') {
+            icon = 'music';
+            typeText = `${song.hymn_number}장. `;
+        } else if (song.type === 'ccm') {
+            icon = 'play';
+        } else if (song.type === 'section') {
+            icon = 'list';
+            typeText = '[목록] ';
+        } else if (song.type === 'media') {
+            icon = song.media_type === 'video' ? 'video' : 'image';
+            typeText = `[${song.media_type === 'video' ? '동영상' : '이미지'}] `;
+        }
+        
+        html += `<div class="list-group-item d-flex justify-content-between align-items-center sortable-item" data-index="${index}">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-grip-vertical drag-handle"></i>
+                <i class="fas fa-${icon} ms-2"></i>
+                <span class="ms-2">${typeText}${song.title}</span>
+            </div>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSong(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    
+    songListDiv.innerHTML = html;
+    
+    // Sortable 초기화
+    initializeSortable();
+}
+
+function initializeSortable() {
+    const sortableList = document.getElementById('sortableList');
+    if (sortableList) {
+        Sortable.create(sortableList, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: function(evt) {
+                // 배열 순서 업데이트
+                const item = songs.splice(evt.oldIndex, 1)[0];
+                songs.splice(evt.newIndex, 0, item);
+                
+                // 리스트 다시 그리기 (인덱스 업데이트를 위해)
+                updateSongList();
+            }
+        });
+    }
+}
+
+function removeSong(index) {
+    songs.splice(index, 1);
+    updateSongList();
+}
+
+
+// 찬양 목록 섹션 추가 함수
+function addSection() {
+    const modal = new bootstrap.Modal(document.getElementById('sectionModal'));
+    modal.show();
+}
+
+function addSectionToList() {
+    const title = document.getElementById('sectionTitle').value;
+    const background = document.getElementById('sectionBackground').value;
+    
+    if (!title) {
+        alert('섹션 제목을 입력하세요.');
+        return;
+    }
+    
+    const section = {
+        title: title,
+        type: 'section',
+        section_title: title,
+        background_image: background,
+        lyrics: ''
+    };
+    
+    addSongToList(section);
+    
+    // 모달 닫기
+    const modal = bootstrap.Modal.getInstance(document.getElementById('sectionModal'));
+    modal.hide();
+    
+    // 폼 초기화
+    document.getElementById('sectionTitle').value = '';
+    document.getElementById('sectionBackground').value = '';
+}
+
+// 미디어 추가 함수
+function addMedia() {
+    const modal = new bootstrap.Modal(document.getElementById('mediaModal'));
+    modal.show();
+    
+    // 파일 드래그 앤 드롭 및 선택 기능 초기화
+    initializeFileUpload();
+}
+
+// 전역 변수로 UI 요소들 선언
+let fileDropArea, fileInput, mediaUrlInput, fileDropContent, selectedFileInfo, selectedFileName, selectedFileSize;
+
+// 파일 업로드 기능 초기화
+function initializeFileUpload() {
+    fileDropArea = document.getElementById('fileDropArea');
+    fileInput = document.getElementById('mediaFile');
+    mediaUrlInput = document.getElementById('mediaUrl');
+    fileDropContent = document.querySelector('.file-drop-content');
+    selectedFileInfo = document.getElementById('selectedFileInfo');
+    selectedFileName = document.getElementById('selectedFileName');
+    selectedFileSize = document.getElementById('selectedFileSize');
+    
+    // 드롭 영역 클릭 이벤트
+    fileDropArea.addEventListener('click', function(e) {
+        // 이미 선택된 파일이 있는 경우에도 새 파일을 선택할 수 있도록 수정
+        e.preventDefault();
+        e.stopPropagation();
+        fileInput.click();
+    });
+    
+    // 파일 선택 이벤트
+    fileInput.addEventListener('change', function(e) {
+        console.log('파일 선택 이벤트 발생:', e.target.files.length);
+        if (e.target.files.length > 0) {
+            console.log('선택된 파일:', e.target.files[0].name);
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+    
+    // 드래그 오버 이벤트
+    fileDropArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        fileDropArea.style.borderColor = '#007bff';
+        fileDropArea.style.backgroundColor = '#e3f2fd';
+    });
+    
+    // 드래그 리브 이벤트
+    fileDropArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        fileDropArea.style.borderColor = '#ddd';
+        fileDropArea.style.backgroundColor = '#f8f9fa';
+    });
+    
+    // 드롭 이벤트
+    fileDropArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileDropArea.style.borderColor = '#ddd';
+        fileDropArea.style.backgroundColor = '#f8f9fa';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+    
+    // 파일 선택 처리 함수
+    function handleFileSelect(file) {
+        console.log('handleFileSelect 호출됨:', file.name, '크기:', file.size, '타입:', file.type);
+        
+        // 파일 형식 검증
+        const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        const validVideoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/webm'];
+        
+        if (!validImageTypes.includes(file.type) && !validVideoTypes.includes(file.type)) {
+            alert('지원되지 않는 파일 형식입니다. 이미지 또는 동영상 파일을 선택해주세요.');
+            return;
+        }
+        
+        // 파일 크기 검증 (50MB 제한)
+        const maxSize = 50 * 1024 * 1024; // 50MB
+        if (file.size > maxSize) {
+            alert('파일 크기가 너무 큽니다. 50MB 이하의 파일을 선택해주세요.');
+            return;
+        }
+        
+        // 미디어 타입 자동 설정
+        const mediaTypeSelect = document.getElementById('mediaType');
+        if (validImageTypes.includes(file.type)) {
+            mediaTypeSelect.value = 'image';
+        } else if (validVideoTypes.includes(file.type)) {
+            mediaTypeSelect.value = 'video';
+        }
+        
+        // 파일 정보 표시
+        selectedFileName.textContent = `${file.name} (업로드 중...)`;
+        selectedFileSize.textContent = formatFileSize(file.size);
+        
+        // UI 업데이트
+        fileDropContent.style.display = 'none';
+        selectedFileInfo.style.display = 'block';
+        
+        // 제목이 비어있으면 파일명으로 설정
+        const titleInput = document.getElementById('mediaTitle');
+        if (!titleInput.value) {
+            titleInput.value = file.name.split('.')[0];
+        }
+        
+        // 실제 파일 업로드
+        uploadFileToServer(file);
+    }
+    
+    // 서버에 파일 업로드하는 함수
+    function uploadFileToServer(file) {
+        console.log('서버로 파일 업로드 시작:', file.name);
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch('/upload_media', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 업로드 성공
+                mediaUrlInput.value = data.file_path;
+                selectedFileName.textContent = `${data.original_name} (업로드 완료)`;
+                console.log('파일 업로드 성공:', data.file_path);
+            } else {
+                // 업로드 실패
+                alert('파일 업로드 실패: ' + data.error);
+                resetFileUploadUIInternal();
+            }
+        })
+        .catch(error => {
+            console.error('업로드 오류:', error);
+            alert('파일 업로드 중 오류가 발생했습니다.');
+            resetFileUploadUIInternal();
+        });
+    }
+    
+    // 파일 업로드 UI 초기화 (내부 함수)
+    function resetFileUploadUIInternal() {
+        console.log('파일 업로드 UI 초기화');
+        fileDropContent.style.display = 'block';
+        selectedFileInfo.style.display = 'none';
+        mediaUrlInput.value = '';
+        fileInput.value = '';
+        // fileInput의 change 이벤트를 다시 트리거할 수 있도록 값을 완전히 클리어
+        fileInput.type = '';
+        fileInput.type = 'file';
+    }
+    
+    // 파일 크기 포맷 함수
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+}
+
+// 전역 파일 업로드 UI 초기화 함수
+function resetFileUploadUI() {
+    if (fileDropContent && selectedFileInfo && mediaUrlInput && fileInput) {
+        console.log('전역 파일 업로드 UI 초기화');
+        fileDropContent.style.display = 'block';
+        selectedFileInfo.style.display = 'none';
+        mediaUrlInput.value = '';
+        fileInput.value = '';
+        // fileInput의 change 이벤트를 다시 트리거할 수 있도록 값을 완전히 클리어
+        fileInput.type = '';
+        fileInput.type = 'file';
+    }
+}
+
+function addMediaToList() {
+    const mediaType = document.getElementById('mediaType').value;
+    const title = document.getElementById('mediaTitle').value;
+    const url = document.getElementById('mediaUrl').value;
+    
+    if (!title || !url) {
+        alert('제목과 파일 경로를 모두 입력하세요.');
+        return;
+    }
+    
+    const media = {
+        title: title,
+        type: 'media',
+        media_type: mediaType,
+        media_url: url,
+        background_image: '',
+        lyrics: ''
+    };
+    
+    addSongToList(media);
+    
+    // 모달 닫기
+    const modal = bootstrap.Modal.getInstance(document.getElementById('mediaModal'));
+    modal.hide();
+    
+    // 폼 초기화
+    document.getElementById('mediaTitle').value = '';
+    document.getElementById('mediaUrl').value = '';
+    document.getElementById('mediaFile').value = '';
+    
+    // UI 초기화 - resetFileUploadUI 함수 호출
+    resetFileUploadUI();
+}
+
+// 드래그 앤 드롭으로 찬양 순서 변경 (위의 initializeSortable에서 처리)
+
+// 폼 제출 시
+document.getElementById('praiseForm').addEventListener('submit', function(e) {
+    // songs가 undefined이거나 null인 경우 빈 배열로 초기화
+    if (!songs || !Array.isArray(songs)) {
+        songs = [];
+    }
+    document.getElementById('songsData').value = JSON.stringify(songs);
+});
+</script>
+{% endblock %} 

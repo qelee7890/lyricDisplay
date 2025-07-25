@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block title %}CCM {{ song_title }} 수정{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-edit"></i> CCM "{{ song_title }}" 수정</h1>
+            <a href="{{ url_for('search') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 검색으로 돌아가기
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-images"></i> 이미지 관리</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="ccmForm">
+                    <!-- 이미지 교체 섹션 -->
+                    <div class="mb-4">
+                        <h6>이미지 교체</h6>
+                        <div class="mb-3">
+                            <label for="images" class="form-label">새 이미지 파일들</label>
+                            <input type="file" class="form-control" id="images" name="images" multiple 
+                                   accept="image/*" onchange="previewImages(this)">
+                            <div class="form-text">
+                                여러 이미지를 선택하면 기존 이미지를 모두 교체합니다. 순서대로 1.jpg, 2.jpg 등으로 저장됩니다.
+                            </div>
+                        </div>
+                        
+                        <!-- 이미지 미리보기 -->
+                        <div id="imagePreview" class="mb-3" style="display: none;">
+                            <h6>새 이미지 미리보기</h6>
+                            <div id="previewContainer" class="d-flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- 순서 변경 섹션 -->
+                    <div class="mb-4">
+                        <h6>이미지 순서 변경</h6>
+                        <p class="text-muted small">드래그 앤 드롭으로 이미지 순서를 변경할 수 있습니다.</p>
+                        
+                        {% if images %}
+                        <div id="sortableImages" class="row">
+                            {% for image in images %}
+                            <div class="col-md-4 mb-3 sortable-item" data-index="{{ loop.index0 }}">
+                                <div class="card">
+                                    <div class="position-relative">
+                                        <img src="{{ url_for('serve_ccm_image', song_title=song_title, filename=image.filename) }}" 
+                                             class="card-img-top" style="height: 150px; object-fit: cover; cursor: pointer;" 
+                                             alt="이미지 {{ image.order }}" id="preview_{{ loop.index0 }}"
+                                             onclick="showImageModal(this.src, '{{ image.order }}번째 이미지')">
+                                        <div class="position-absolute top-0 end-0 p-1">
+                                            <label for="individual_image_{{ loop.index0 }}" class="btn btn-sm btn-primary" style="cursor: pointer;">
+                                                <i class="fas fa-camera"></i>
+                                            </label>
+                                            <input type="file" id="individual_image_{{ loop.index0 }}" 
+                                                   name="individual_image_{{ loop.index0 }}" 
+                                                   data-index="{{ loop.index0 }}"
+                                                   accept="image/*" 
+                                                   style="display: none;"
+                                                   onchange="previewIndividualImage(this, {{ loop.index0 }})">
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-2 text-center">
+                                        <small class="text-muted">{{ image.order }}번째</small>
+                                        <div class="drag-handle mt-1">
+                                            <i class="fas fa-grip-vertical text-muted"></i>
+                                        </div>
+                                        <div class="mt-1">
+                                            <button type="button" class="btn btn-xs btn-outline-danger" 
+                                                    onclick="resetIndividualImage({{ loop.index0 }})" 
+                                                    id="reset_btn_{{ loop.index0 }}" style="display: none;">
+                                                <i class="fas fa-undo"></i> 원본
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">이미지가 없습니다.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 숨겨진 입력 필드 -->
+                    <input type="hidden" id="imageOrder" name="image_order" value="">
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetOrder()">
+                            <i class="fas fa-undo"></i> 순서 초기화
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 저장
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> 도움말</h5>
+            </div>
+            <div class="card-body">
+                <h6>전체 이미지 교체</h6>
+                <ul class="small">
+                    <li>여러 이미지를 한번에 선택하여 모든 이미지를 교체</li>
+                    <li>기존 이미지는 모두 삭제됩니다</li>
+                </ul>
+                
+                <h6>개별 이미지 교체</h6>
+                <ul class="small">
+                    <li>각 이미지의 <i class="fas fa-camera"></i> 버튼을 클릭하여 개별 교체</li>
+                    <li>원본 버튼으로 변경사항을 되돌릴 수 있습니다</li>
+                    <li>미리보기로 변경 결과를 확인할 수 있습니다</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>순서 변경</h6>
+                <ul class="small">
+                    <li>이미지를 드래그하여 순서를 변경할 수 있습니다</li>
+                    <li>변경된 순서는 저장 버튼을 눌러야 적용됩니다</li>
+                    <li>초기화 버튼으로 원래 순서로 되돌릴 수 있습니다</li>
+                </ul>
+                
+                <h6>이미지 보기</h6>
+                <ul class="small">
+                    <li>이미지를 클릭하면 확대된 모달에서 볼 수 있습니다</li>
+                    <li>모달에서 이미지를 다운로드할 수 있습니다</li>
+                </ul>
+                
+                <div class="alert alert-warning mt-3">
+                    <small>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        이미지 교체 시 기존 이미지는 모두 삭제됩니다.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 현재 이미지 목록 -->
+        {% if images %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list"></i> 현재 이미지</h5>
+            </div>
+            <div class="card-body">
+                {% for image in images %}
+                <div class="d-flex align-items-center mb-2">
+                    <img src="{{ url_for('serve_ccm_image', song_title=song_title, filename=image.filename) }}" 
+                         style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;" class="me-2"
+                         onclick="showImageModal(this.src, '{{ image.order }}번째 이미지')">
+                    <div>
+                        <small class="d-block">{{ image.filename }}</small>
+                        <small class="text-muted">{{ image.order }}번째</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 이미지 확대 모달 -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">이미지 보기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" alt="확대 이미지" style="max-height: 70vh;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                <button type="button" class="btn btn-primary" onclick="downloadImage()">
+                    <i class="fas fa-download"></i> 다운로드
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+let originalOrder = [];
+let sortable = null;
+let originalImages = {}; // 원본 이미지 저장
+let changedImages = {}; // 변경된 이미지 저장
+
+document.addEventListener('DOMContentLoaded', function() {
+    const sortableElement = document.getElementById('sortableImages');
+    if (sortableElement) {
+        // 원래 순서 저장
+        const items = sortableElement.querySelectorAll('.sortable-item');
+        originalOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-index')));
+        
+        // 원본 이미지 URL 저장
+        items.forEach((item, index) => {
+            const img = item.querySelector('img');
+            if (img) {
+                originalImages[index] = img.src;
+            }
+        });
+        
+        // Sortable 초기화
+        sortable = Sortable.create(sortableElement, {
+            animation: 150,
+            handle: '.drag-handle',
+            onEnd: function(evt) {
+                updateOrder();
+            }
+        });
+    }
+});
+
+function updateOrder() {
+    const items = document.querySelectorAll('#sortableImages .sortable-item');
+    const newOrder = Array.from(items).map(item => parseInt(item.getAttribute('data-index')));
+    document.getElementById('imageOrder').value = JSON.stringify(newOrder);
+}
+
+function resetOrder() {
+    if (sortable && originalOrder.length > 0) {
+        const items = document.querySelectorAll('#sortableImages .sortable-item');
+        const sortableElement = document.getElementById('sortableImages');
+        
+        // 원래 순서대로 DOM 재정렬
+        originalOrder.forEach(index => {
+            const item = Array.from(items).find(item => parseInt(item.getAttribute('data-index')) === index);
+            if (item) {
+                sortableElement.appendChild(item);
+            }
+        });
+        
+        // 숨겨진 필드 초기화
+        document.getElementById('imageOrder').value = '';
+    }
+}
+
+function previewImages(input) {
+    const previewDiv = document.getElementById('imagePreview');
+    const previewContainer = document.getElementById('previewContainer');
+    
+    previewContainer.innerHTML = '';
+    
+    if (input.files && input.files.length > 0) {
+        previewDiv.style.display = 'block';
+        
+        Array.from(input.files).forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'text-center';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" style="width: 100px; height: 100px; object-fit: cover;" class="border rounded">
+                        <div class="small text-muted mt-1">${index + 1}번째</div>
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    } else {
+        previewDiv.style.display = 'none';
+    }
+}
+
+// 개별 이미지 미리보기
+function previewIndividualImage(input, index) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById(`preview_${index}`);
+            if (previewImg) {
+                previewImg.src = e.target.result;
+                changedImages[index] = input.files[0];
+                
+                // 원본으로 되돌리기 버튼 표시
+                const resetBtn = document.getElementById(`reset_btn_${index}`);
+                if (resetBtn) {
+                    resetBtn.style.display = 'inline-block';
+                }
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// 개별 이미지 원본으로 되돌리기
+function resetIndividualImage(index) {
+    const previewImg = document.getElementById(`preview_${index}`);
+    const fileInput = document.getElementById(`individual_image_${index}`);
+    const resetBtn = document.getElementById(`reset_btn_${index}`);
+    
+    if (previewImg && originalImages[index]) {
+        previewImg.src = originalImages[index];
+        fileInput.value = '';
+        delete changedImages[index];
+        resetBtn.style.display = 'none';
+    }
+}
+
+// 폼 제출 시 처리
+document.getElementById('ccmForm').addEventListener('submit', function(e) {
+    const hasAllImages = document.getElementById('images').files.length > 0;
+    const hasIndividualImages = Object.keys(changedImages).length > 0;
+    const hasOrderChange = document.getElementById('imageOrder').value !== '';
+    
+    if (hasAllImages && (hasIndividualImages || hasOrderChange)) {
+        if (!confirm('전체 이미지 교체와 다른 작업을 동시에 할 수 없습니다. 전체 이미지 교체만 진행하시겠습니까?')) {
+            e.preventDefault();
+            return;
+        }
+        // 전체 이미지 교체 우선
+        document.getElementById('imageOrder').value = '';
+        // 개별 이미지 교체 파일들 제거
+        Object.keys(changedImages).forEach(index => {
+            const fileInput = document.getElementById(`individual_image_${index}`);
+            if (fileInput) {
+                fileInput.value = '';
+            }
+        });
+        changedImages = {};
+    }
+    
+    // 개별 이미지 변경 정보를 숨겨진 필드에 추가
+    if (hasIndividualImages && !hasAllImages) {
+        const changedImagesInput = document.createElement('input');
+        changedImagesInput.type = 'hidden';
+        changedImagesInput.name = 'changed_images_info';
+        changedImagesInput.value = JSON.stringify(Object.keys(changedImages));
+        this.appendChild(changedImagesInput);
+    }
+});
+
+// 이미지 확대 모달 표시
+function showImageModal(imageSrc, imageTitle) {
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('imageModalLabel');
+    
+    modalImage.src = imageSrc;
+    modalTitle.textContent = imageTitle;
+    modal.show();
+}
+
+// 이미지 다운로드
+function downloadImage() {
+    const modalImage = document.getElementById('modalImage');
+    const imageSrc = modalImage.src;
+    const imageTitle = document.getElementById('imageModalLabel').textContent;
+    
+    // 이미지를 다운로드하기 위한 임시 링크 생성
+    const link = document.createElement('a');
+    link.href = imageSrc;
+    link.download = `${imageTitle}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+{% endblock %}

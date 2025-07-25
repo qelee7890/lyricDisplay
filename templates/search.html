@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}찬양 검색{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-search"></i> 찬양 검색</h1>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="mb-4">
+            <form method="GET" action="{{ url_for('search') }}">
+                <div class="input-group">
+                    <input type="text" class="form-control form-control-lg" name="q" value="{{ query }}" placeholder="찬양 제목, 번호, 가사로 검색하세요...">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i> 검색
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if query %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-music"></i> 찬송가 검색 결과</h5>
+            </div>
+            <div class="card-body">
+                {% if hymn_results %}
+                    <div class="list-group">
+                        {% for hymn in hymn_results %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ hymn.number }}장. {{ hymn.title }}</h6>
+                                    <small class="text-muted">새찬송가 {{ hymn.new_number }}장</small>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('edit_hymn', hymn_number=hymn.number) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> 수정
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">찬송가 검색 결과가 없습니다.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-play"></i> CCM 검색 결과</h5>
+            </div>
+            <div class="card-body">
+                {% if ccm_results %}
+                    <div class="list-group">
+                        {% for ccm in ccm_results %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ ccm.song_title }}</h6>
+                                    <small class="text-muted">CCM</small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-info me-2">{{ ccm.image_count }}</span>
+                                    {% if has_ccm_lyrics(ccm.song_title) %}
+                                        <a href="{{ url_for('edit_ccm_lyrics', song_title=ccm.song_title) }}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-edit"></i> 가사 수정
+                                        </a>
+                                    {% else %}
+                                        <a href="{{ url_for('edit_ccm', song_title=ccm.song_title) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i> 이미지 수정
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">CCM 검색 결과가 없습니다.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h3 class="text-muted">찬양을 검색해보세요</h3>
+            <p class="text-muted">찬송가 번호, 제목, 가사로 검색할 수 있습니다.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

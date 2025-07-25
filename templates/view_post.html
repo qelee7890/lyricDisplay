@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - 찬양 순서{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="fas fa-music"></i> {{ post.title }}</h1>
+                <p class="text-muted">
+                    <i class="fas fa-calendar"></i> {{ post.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> 수정
+                </a>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 목록으로
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> 설명</h5>
+            </div>
+            <div class="card-body">
+                {% if post.content %}
+                    <p>{{ post.content }}</p>
+                {% else %}
+                    <p class="text-muted">설명이 없습니다.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list"></i> 찬양 순서</h5>
+            </div>
+            <div class="card-body">
+                {% if post.songs %}
+                    <div class="list-group">
+                        {% for song in post.songs %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-primary me-2">{{ loop.index }}</span>
+                                        {% if song.song_type == 'hymn' %}
+                                            <i class="fas fa-music me-2"></i>
+                                        {% elif song.song_type == 'ccm' %}
+                                            <i class="fas fa-music me-2"></i>
+                                        {% elif song.song_type == 'section' %}
+                                            <i class="fas fa-list me-2"></i>
+                                        {% elif song.song_type == 'media' %}
+                                            <i class="fas fa-play me-2"></i>
+                                        {% else %}
+                                            <i class="fas fa-music me-2"></i>
+                                        {% endif %}
+                                        <h6 class="mb-0">
+                                            {% if song.song_type == 'hymn' %}
+                                                {{ song.hymn_number }}장. {{ song.title }}
+                                            {% else %}
+                                                {{ song.title }}
+                                            {% endif %}
+                                        </h6>
+                                    </div>
+                                    
+                                    {% if song.lyrics %}
+                                    <div class="mt-2">
+                                        <small class="text-muted">가사:</small>
+                                        <div class="border rounded p-2 bg-light mt-1">
+                                            <pre class="mb-0" style="white-space: pre-wrap;">{{ song.lyrics }}</pre>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="ms-3">
+                                    {% if song.song_type == 'hymn' %}
+                                        <span class="badge bg-success">찬송가</span>
+                                    {% elif song.song_type == 'ccm' %}
+                                        <span class="badge bg-info">CCM</span>
+                                    {% elif song.song_type == 'section' %}
+                                        <span class="badge bg-warning">찬양 목록</span>
+                                    {% elif song.song_type == 'media' %}
+                                        <span class="badge bg-danger">미디어</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">기타</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">등록된 찬양이 없습니다.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> 통계</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-success">{{ post.songs|selectattr('song_type', 'equalto', 'hymn')|list|length }}</h4>
+                            <small class="text-muted">찬송가</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="border rounded p-3">
+                            <h4 class="text-info">{{ post.songs|selectattr('song_type', 'equalto', 'ccm')|list|length }}</h4>
+                            <small class="text-muted">CCM</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-3">
+                            <h4 class="text-warning">{{ post.songs|selectattr('song_type', 'equalto', 'section')|list|length }}</h4>
+                            <small class="text-muted">찬양 목록</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-3">
+                            <h4 class="text-danger">{{ post.songs|selectattr('song_type', 'equalto', 'media')|list|length }}</h4>
+                            <small class="text-muted">미디어</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="mt-3">
+                    <h6>찬양 유형별 분포</h6>
+                    <div class="progress mb-2">
+                        {% set hymn_count = post.songs|selectattr('song_type', 'equalto', 'hymn')|list|length %}
+                        {% set ccm_count = post.songs|selectattr('song_type', 'equalto', 'ccm')|list|length %}
+                        {% set section_count = post.songs|selectattr('song_type', 'equalto', 'section')|list|length %}
+                        {% set media_count = post.songs|selectattr('song_type', 'equalto', 'media')|list|length %}
+                        {% set total = post.songs|length %}
+                        
+                        {% if total > 0 %}
+                            {% if hymn_count > 0 %}
+                                <div class="progress-bar bg-success" style="width: {{ (hymn_count / total * 100)|round(1) }}%">
+                                    찬송가 ({{ hymn_count }})
+                                </div>
+                            {% endif %}
+                            {% if ccm_count > 0 %}
+                                <div class="progress-bar bg-info" style="width: {{ (ccm_count / total * 100)|round(1) }}%">
+                                    CCM ({{ ccm_count }})
+                                </div>
+                            {% endif %}
+                            {% if section_count > 0 %}
+                                <div class="progress-bar bg-warning" style="width: {{ (section_count / total * 100)|round(1) }}%">
+                                    찬양 목록 ({{ section_count }})
+                                </div>
+                            {% endif %}
+                            {% if media_count > 0 %}
+                                <div class="progress-bar bg-danger" style="width: {{ (media_count / total * 100)|round(1) }}%">
+                                    미디어 ({{ media_count }})
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cog"></i> 관리</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('presentation', post_id=post.id) }}" class="btn btn-success" target="_blank">
+                        <i class="fas fa-presentation"></i> 프레젠테이션 실행
+                    </a>
+                    <button class="btn btn-outline-primary" onclick="copyToClipboard()">
+                        <i class="fas fa-copy"></i> 링크 복사
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyToClipboard() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(function() {
+        alert('링크가 클립보드에 복사되었습니다!');
+    }, function(err) {
+        console.error('클립보드 복사 실패:', err);
+        alert('링크 복사에 실패했습니다.');
+    });
+}
+</script>
+{% endblock %} 

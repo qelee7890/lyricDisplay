@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}CCM 업로드{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-music"></i> CCM 업로드</h1>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="ccmTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-panel" type="button" role="tab">
+                            <i class="fas fa-image"></i> 이미지 업로드
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="lyrics-tab" data-bs-toggle="tab" data-bs-target="#lyrics-panel" type="button" role="tab">
+                            <i class="fas fa-edit"></i> 가사 입력
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="ccmTabContent">
+                    <!-- 이미지 업로드 탭 -->
+                    <div class="tab-pane fade show active" id="image-panel" role="tabpanel">
+                        <form method="POST" enctype="multipart/form-data" id="imageUploadForm">
+                            <input type="hidden" name="upload_type" value="image">
+                            <div class="mb-3">
+                                <label for="image_song_title" class="form-label">찬양 제목</label>
+                                <input type="text" class="form-control" id="image_song_title" name="song_title" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="images" class="form-label">이미지 파일들</label>
+                                <input type="file" class="form-control" id="images" name="images" multiple accept="image/*" required>
+                                <div class="form-text">
+                                    여러 장의 이미지를 선택할 수 있습니다. 파일명은 1.jpg, 2.jpg 순서로 자동 저장됩니다.
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div id="imagePreview" class="row"></div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-upload"></i> 이미지 업로드
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- 가사 입력 탭 -->
+                    <div class="tab-pane fade" id="lyrics-panel" role="tabpanel">
+                        <form method="POST" id="lyricsUploadForm">
+                            <input type="hidden" name="upload_type" value="lyrics">
+                            <div class="mb-3">
+                                <label for="lyrics_song_title" class="form-label">찬양 제목 *</label>
+                                <input type="text" class="form-control" id="lyrics_song_title" name="song_title" required 
+                                       placeholder="예: 십자가 선물">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="ccm_lyrics" class="form-label">가사 *</label>
+                                <textarea class="form-control" id="ccm_lyrics" name="lyrics" rows="15" required
+                                          placeholder="1절
+주님께서 주신 십자가 선물
+나의 죄를 대신 지신 그 사랑
+감사함이 넘쳐흘러 찬양해
+할렐루야 주님 찬양해
+
+2절
+어둠 속에 빛이 되신 예수님
+절망 중에 소망 되신 그 이름
+...
+
+후렴
+후렴 가사가 있는 경우 여기에 작성하세요..."></textarea>
+                                <div class="form-text">
+                                    <strong>가사 형식 안내:</strong><br>
+                                    - 각 절은 "1절", "2절" 등으로 시작하세요<br>
+                                    - 후렴이 있는 경우 "후렴"으로 표시하세요<br>
+                                    - 절과 절 사이는 한 줄 띄워주세요
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> 가사 저장
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> 업로드 가이드</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6><i class="fas fa-image text-primary"></i> 이미지 업로드</h6>
+                    <ul class="small list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> PNG, JPG, JPEG, GIF 지원</li>
+                        <li><i class="fas fa-check text-success"></i> 최대 16MB까지 업로드</li>
+                        <li><i class="fas fa-check text-success"></i> 1.jpg, 2.jpg 순서로 저장</li>
+                    </ul>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-edit text-success"></i> 가사 입력</h6>
+                    <ul class="small list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> 텍스트 기반 가사 입력</li>
+                        <li><i class="fas fa-check text-success"></i> 찬송가와 유사한 프레젠테이션</li>
+                        <li><i class="fas fa-check text-success"></i> 절별 구분 및 후렴 지원</li>
+                    </ul>
+                </div>
+                
+                <hr>
+                
+                <h6>사용법</h6>
+                <ol class="small">
+                    <li>이미지 또는 가사 탭을 선택하세요</li>
+                    <li>찬양 제목을 입력하세요</li>
+                    <li>이미지 파일 또는 가사를 입력하세요</li>
+                    <li>업로드/저장 버튼을 클릭하세요</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list"></i> 최근 업로드</h5>
+            </div>
+            <div class="card-body">
+                <div id="recentUploads">
+                    <p class="text-muted">최근 업로드된 CCM이 여기에 표시됩니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 이미지 미리보기
+document.getElementById('images').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    
+    const files = Array.from(e.target.files);
+    files.forEach((file, index) => {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-4 col-sm-6 mb-3';
+                col.innerHTML = `
+                    <div class="card">
+                        <img src="${e.target.result}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                        <div class="card-body p-2">
+                            <small class="text-muted">${index + 1}. ${file.name}</small>
+                        </div>
+                    </div>
+                `;
+                preview.appendChild(col);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+});
+
+// 이미지 업로드 폼 제출 시 로딩 표시
+document.getElementById('imageUploadForm').addEventListener('submit', function() {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 업로드 중...';
+    submitBtn.disabled = true;
+});
+
+// 가사 업로드 폼 제출 시 로딩 표시
+document.getElementById('lyricsUploadForm').addEventListener('submit', function() {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 저장 중...';
+    submitBtn.disabled = true;
+});
+
+// 최근 업로드 목록 로드
+function loadRecentUploads() {
+    const recentUploads = document.getElementById('recentUploads');
+    recentUploads.innerHTML = `
+        <div class="list-group list-group-flush">
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">예수 나의 치료자</h6>
+                    <small class="text-muted">이미지 4장</small>
+                </div>
+                <span class="badge bg-primary">이미지</span>
+            </div>
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">십자가 선물</h6>
+                    <small class="text-muted">가사 텍스트</small>
+                </div>
+                <span class="badge bg-success">가사</span>
+            </div>
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">나 무엇과도</h6>
+                    <small class="text-muted">이미지 3장</small>
+                </div>
+                <span class="badge bg-primary">이미지</span>
+            </div>
+        </div>
+    `;
+}
+
+// 페이지 로드 시 최근 업로드 목록 로드
+document.addEventListener('DOMContentLoaded', loadRecentUploads);
+</script>
+{% endblock %} 

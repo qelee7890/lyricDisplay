@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}CCM 가사 수정{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-edit"></i> CCM 가사 수정</h1>
+            <a href="{{ url_for('search') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 돌아가기
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-music"></i> {{ song_title }} - 가사 수정</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="ccmLyricsForm">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">CCM 제목 *</label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ song_title }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="lyrics" class="form-label">가사 *</label>
+                        <textarea class="form-control" id="lyrics" name="lyrics" rows="20" required>{{ lyrics }}</textarea>
+                        <div class="form-text">
+                            <strong>가사 형식 안내:</strong><br>
+                            - 각 절은 "1절", "2절" 등으로 시작하세요<br>
+                            - 후렴이 있는 경우 "후렴"으로 표시하세요<br>
+                            - 한국어 가사와 영어 가사를 모두 입력할 수 있습니다<br>
+                            - 절과 절 사이는 한 줄 띄워주세요
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('search') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> 취소
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 수정 완료
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> 수정 가이드</h5>
+            </div>
+            <div class="card-body">
+                <h6>필수 정보</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> CCM 제목</li>
+                    <li><i class="fas fa-check text-success"></i> 가사</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>가사 작성 예시 (찬송가와 동일한 한글-영문 쌍 구조)</h6>
+                <div class="small bg-light p-2 rounded">
+                    <pre>1절
+주님께서 주신 십자가 선물
+나의 죄를 대신 지신 그 사랑
+
+He is plenty for the needy
+Height for all of low degree.
+
+2절
+어둠 속에 빛이 되신 예수님
+절망 중에 소망 되신 그 이름
+
+In the darkness You're the light
+In despair You are the hope
+
+후렴
+후렴 한글 가사
+그 주님의 사랑
+
+Chorus English lyrics
+Your love so divine</pre>
+                </div>
+                
+                <div class="alert alert-info mt-2">
+                    <small><i class="fas fa-info-circle"></i> 찬송가와 동일한 구조로 한글 가사와 영문 가사가 쌍을 이루어 표시됩니다. 구분자는 자동으로 추가됩니다.</small>
+                </div>
+                
+                <hr>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>주의사항:</strong><br>
+                    제목을 변경하면 CCM 폴더 이름도 함께 변경됩니다.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 폼 제출 시 로딩 표시
+document.getElementById('ccmLyricsForm').addEventListener('submit', function() {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 수정 중...';
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}

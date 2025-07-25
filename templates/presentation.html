@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{{ post.title }} - lyricDisplay</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('serve_dist_file', filename='reset.css') }}">
+    <link rel="stylesheet" href="{{ url_for('serve_dist_file', filename='reveal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('serve_dist_file', filename='ldstyle.css') }}" id="theme">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- 제목 슬라이드 -->
+            <section {% if post.background_image %}data-background="{{ url_for('serve_dist_file', filename=post.background_image.replace("dist/", "")) }}"{% endif %} data-background-color="#222">
+                <div class="js-clock" style="text-align: left">
+                    <h2>{{ post.created_at.strftime('%Y년 %m월 %d일') }}</h2>
+                    <h3>{{ post.title }}</h3>
+                </div>
+            </section>
+
+            <!-- 찬양 슬라이드들 -->
+            {% for song in post.songs %}
+                {% if song.song_type == 'section' %}
+                    <!-- 찬양 목록 섹션 -->
+                    <section id="{{ song.section_title }}" {% if song.background_image %}data-background="{{ url_for('serve_dist_file', filename=song.background_image.replace("dist/", "")) }}"{% endif %}>
+                        <h2>{{ song.section_title }}</h2>
+                        <table>
+                            <tbody>
+                                <thead>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </thead>
+                                <!-- 이 섹션 뒤에 나올 찬양들을 미리보기로 표시 -->
+                                {% set section_songs = [] %}
+                                {% for next_song in post.songs[loop.index0 + 1:] %}
+                                    {% if next_song.song_type == 'section' %}
+                                        {% set _ = section_songs.append('BREAK') %}
+                                    {% elif next_song.song_type in ['hymn', 'ccm'] and 'BREAK' not in section_songs %}
+                                        {% set _ = section_songs.append(next_song) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% for next_song in section_songs %}
+                                    {% if next_song != 'BREAK' %}
+                                        <tr>
+                                            <th>{{ '찬송가' if next_song.song_type == 'hymn' else '찬양곡' }}</th>
+                                            <th>{{ next_song.hymn_number + '장' if next_song.hymn_number else '' }}</th>
+                                            <th>{{ next_song.title }}</th>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </section>
+
+                {% elif song.song_type == 'media' %}
+                    <!-- 미디어 슬라이드 -->
+                    {% if song.media_type == 'image' %}
+                        <section data-background="{{ url_for('serve_dist_file', filename=song.media_url.replace("dist/", "")) }}" data-background-size="contain" data-background-color="#000">
+                        </section>
+                    {% elif song.media_type == 'video' %}
+                        <section 
+                            data-background-video="{{ url_for('serve_dist_file', filename=song.media_url.replace("dist/", "")) }}"
+                            data-background-video-loop="true"
+                            data-background-video-muted="true"
+                            data-background-size="contain"
+                            data-background-color="#000"
+                            data-video-src="{{ url_for('serve_dist_file', filename=song.media_url.replace("dist/", "")) }}">
+                            
+                            <!-- 비디오 컨트롤 버튼 -->
+                            <div class="video-controls">
+                                <button class="video-control-btn" onclick="toggleVideoSound(this)" title="소리 켜기/끄기">
+                                    <span class="muted-icon">🔇</span>
+                                    <span class="unmuted-icon" style="display: none;">🔊</span>
+                                </button>
+                                <button class="video-control-btn" onclick="toggleVideoPlay(this)" title="재생/일시정지">
+                                    <span class="play-icon">⏸</span>
+                                    <span class="pause-icon" style="display: none;">▶</span>
+                                </button>
+                            </div>
+                        </section>
+                    {% endif %}
+
+
+                {% elif song.song_type == 'hymn' %}
+                    <!-- 찬송가 -->
+                    <section id="{{ song.title }}">
+                        {% if song.lyrics %}
+                            {% set verses = song.lyrics.split('\n\n\n\n') %}
+                            <!-- 절수 계산: 숫자+절로 시작하는 블록의 개수를 리스트로 수집 (중복 제거) -->
+                            {% set verse_numbers = [] %}
+                            {% for v in verses %}
+                                {% set clean_verse = v.strip() %}
+                                {% if clean_verse %}
+                                    {% set first_line = clean_verse.split('\n')[0] %}
+                                    {% if first_line and first_line.endswith('절') and first_line[:-1].isdigit() %}
+                                        {% set verse_num = first_line[:-1]|int %}
+                                        {% if verse_num not in verse_numbers %}
+                                            {% set _ = verse_numbers.append(verse_num) %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {% set actual_verse_count = verse_numbers|length %}
+                            {% for verse in verses %}
+                                {% if verse.strip() %}
+                                    <section data-transition="none" {% if song.background_image %}data-background="{{ url_for('serve_dist_file', filename=song.background_image.replace("dist/", "")) }}"{% endif %}>
+                                        <h2>{% if song.hymn_number %}{{ song.hymn_number }}장<a>(새{{ song.hymn_number }})</a>{% endif %}. {{ song.title }}</h2>
+                                        <div class="imageblock">
+                                            <p>
+                                                {% set clean_verse = verse.strip() %}
+                                                {% set verse_lines = clean_verse.split('\n') %}
+                                                {% if verse_lines[0] and ('절' in verse_lines[0] or '후렴' in verse_lines[0]) %}
+                                                    {{ verse_lines[0] }}<br/>
+                                                    {% for line in verse_lines[1:] %}
+                                                        {% if line.strip() %}
+                                                            {{ line }}<br/>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {% for line in verse_lines %}
+                                                        {% if line.strip() %}
+                                                            {{ line }}<br/>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <h4>
+                                            {% if verse_lines[0] and ('절' in verse_lines[0] or '후렴' in verse_lines[0]) %}
+                                                {{ verse_lines[0] }}/{{ actual_verse_count }}절
+                                            {% else %}
+                                                {{ song.hymn_number }}장
+                                            {% endif %}
+                                        </h4>
+                                    </section>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </section>
+
+                {% elif song.song_type == 'ccm' %}
+                    <!-- CCM -->
+                    <section id="{{ song.title }}">
+                        {% if has_ccm_lyrics(song.title) %}
+                            <!-- 가사 기반 CCM -->
+                            {% set ccm_lyrics = get_ccm_lyrics(song.title) %}
+                            {% if ccm_lyrics %}
+                                {% set parsed_verses = parse_ccm_lyrics(ccm_lyrics) %}
+                                {% set verse_keys = parsed_verses.keys() | list %}
+                                {% set verse_count = verse_keys | length %}
+                                
+                                {% for verse_key, verse_data in parsed_verses.items() %}
+                                    <section data-transition="none" {% if song.background_image %}data-background="{{ url_for('serve_dist_file', filename=song.background_image.replace("dist/", "")) }}"{% endif %}>
+                                        <h2>{{ song.title }}</h2>
+                                        <div class="imageblock">
+                                            <p>
+                                                {% if verse_data.verse_number == '후렴' %}
+                                                    후렴<br/>
+                                                {% else %}
+                                                    {{ verse_data.verse_number }}절<br/>
+                                                {% endif %}
+                                                {% for line in verse_data.text %}
+                                                    {% if line.strip() %}
+                                                        {{ line }}<br/>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </p>
+                                        </div>
+                                        <h4>
+                                            {% if verse_data.verse_number == '후렴' %}
+                                                후렴{% if verse_data.total_verses > 0 %}/{{ verse_data.total_verses }}절{% endif %}
+                                            {% else %}
+                                                {{ verse_data.verse_number }}절/{{ verse_data.total_verses }}절
+                                            {% endif %}
+                                        </h4>
+                                    </section>
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            <!-- 이미지 기반 CCM -->
+                            {% set ccm_images = get_ccm_images(song.title) %}
+                            {% for image in ccm_images %}
+                                <section data-transition="none" {% if song.background_image %}data-background="{{ url_for('serve_dist_file', filename=song.background_image.replace("dist/", "")) }}"{% endif %}>
+                                    <h2>{{ song.title }}</h2>
+                                    <div class="imageblock">
+                                        <img class="cropped" src="{{ url_for('serve_ccm_image', song_title=song.title, filename=image.filename) }}" style="object-position: 0 0%; width: 100%;" />
+                                    </div>
+                                    <h4>{{ loop.index }}장/{{ ccm_images|length }}장</h4>
+                                </section>
+                            {% endfor %}
+                        {% endif %}
+                    </section>
+                {% endif %}
+
+                <!-- 섹션 사이의 배경 슬라이드 (미디어는 제외) -->
+                {% if song.song_type == 'section' and not loop.last %}
+                    {% set next_song = post.songs[loop.index0 + 1] if loop.index0 + 1 < post.songs|length else none %}
+                    {% if next_song and next_song.song_type == 'section' %}
+                        <section {% if post.background_image %}data-background="{{ url_for('serve_dist_file', filename=post.background_image.replace("dist/", "")) }}"{% endif %} data-background-color="#222"></section>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    
+    <script src="{{ url_for('serve_dist_file', filename='reveal.js') }}"></script>
+    <script src="{{ url_for('serve_dist_file', filename='clock.js') }}"></script>
+    <script>
+        Reveal.initialize({
+            width: 1280,
+            height: 720,
+            controls: true,
+            progress: true,
+            center: false,
+            hash: true,
+            navigationMode: "linear",
+            {% if post.parallax_image %}
+            parallaxBackgroundImage: "{{ url_for('serve_dist_file', filename=post.parallax_image.replace("dist/", "")) }}",
+            parallaxBackgroundSize: "2688px 1280px",
+            parallaxBackgroundHorizontal: 10,
+            parallaxBackgroundVertical: 0,
+            {% endif %}
+            transition: "slide"
+        });
+        
+        // 비디오 제어 함수들
+        function toggleVideoSound(button) {
+            const section = button.closest('section');
+            const videoElement = section.closest('.reveal').querySelector('.slide-background.present video');
+            
+            if (videoElement) {
+                if (videoElement.muted) {
+                    videoElement.muted = false;
+                    button.querySelector('.muted-icon').style.display = 'none';
+                    button.querySelector('.unmuted-icon').style.display = 'inline';
+                } else {
+                    videoElement.muted = true;
+                    button.querySelector('.muted-icon').style.display = 'inline';
+                    button.querySelector('.unmuted-icon').style.display = 'none';
+                }
+            }
+        }
+        
+        function toggleVideoPlay(button) {
+            const section = button.closest('section');
+            const videoElement = section.closest('.reveal').querySelector('.slide-background.present video');
+            
+            if (videoElement) {
+                if (videoElement.paused) {
+                    videoElement.play();
+                    button.querySelector('.play-icon').style.display = 'inline';
+                    button.querySelector('.pause-icon').style.display = 'none';
+                } else {
+                    videoElement.pause();
+                    button.querySelector('.play-icon').style.display = 'none';
+                    button.querySelector('.pause-icon').style.display = 'inline';
+                }
+            }
+        }
+        
+        // 슬라이드 변경 시 비디오 컨트롤 상태 업데이트
+        Reveal.addEventListener('slidechanged', function(event) {
+            const currentSlide = event.currentSlide;
+            const videoControls = currentSlide.querySelector('.video-controls');
+            
+            if (videoControls) {
+                setTimeout(() => {
+                    const videoElement = document.querySelector('.slide-background.present video');
+                    if (videoElement) {
+                        // 소리 버튼 상태 업데이트
+                        const soundBtn = videoControls.querySelector('button[onclick*="toggleVideoSound"]');
+                        if (soundBtn) {
+                            if (videoElement.muted) {
+                                soundBtn.querySelector('.muted-icon').style.display = 'inline';
+                                soundBtn.querySelector('.unmuted-icon').style.display = 'none';
+                            } else {
+                                soundBtn.querySelector('.muted-icon').style.display = 'none';
+                                soundBtn.querySelector('.unmuted-icon').style.display = 'inline';
+                            }
+                        }
+                        
+                        // 재생 버튼 상태 업데이트
+                        const playBtn = videoControls.querySelector('button[onclick*="toggleVideoPlay"]');
+                        if (playBtn) {
+                            if (videoElement.paused) {
+                                playBtn.querySelector('.play-icon').style.display = 'none';
+                                playBtn.querySelector('.pause-icon').style.display = 'inline';
+                            } else {
+                                playBtn.querySelector('.play-icon').style.display = 'inline';
+                                playBtn.querySelector('.pause-icon').style.display = 'none';
+                            }
+                        }
+                    }
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

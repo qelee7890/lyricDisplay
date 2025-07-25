@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}찬양 순서 관리 - 홈{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-list"></i> 찬양 순서 목록</h1>
+            <a href="{{ url_for('new_post') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 새 찬양 순서 작성
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if posts %}
+<div class="row">
+    {% for post in posts %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">{{ post.title }}</h5>
+                <p class="card-text text-muted">
+                    <small>
+                        <i class="fas fa-calendar"></i> {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    </small>
+                </p>
+                <p class="card-text">{{ post.content[:100] }}{% if post.content|length > 100 %}...{% endif %}</p>
+                
+                <div class="mb-3">
+                    <strong>찬양 목록:</strong>
+                    <ul class="list-unstyled mt-2">
+                        {% for song in post.songs[:3] %}
+                        <li>
+                            <i class="fas fa-{{ 'music' if song.song_type == 'hymn' else 'play' }}"></i>
+                            {% if song.song_type == 'hymn' %}
+                                {{ song.hymn_number }}장. {{ song.title }}
+                            {% else %}
+                                {{ song.title }}
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                        {% if post.songs|length > 3 %}
+                        <li class="text-muted">... 외 {{ post.songs|length - 3 }}곡</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye"></i> 보기
+                        </a>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('presentation', post_id=post.id) }}" class="btn btn-success btn-sm me-2" target="_blank">
+                            <i class="fas fa-presentation"></i> 프레젠테이션
+                        </a>
+                        <button type="button" class="btn btn-outline-info btn-sm me-2" onclick="duplicatePost({{ post.id }}, '{{ post.title }}')" title="복제하기">
+                            <i class="fas fa-copy"></i> 복제
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete({{ post.id }}, '{{ post.title }}')">
+                            <i class="fas fa-trash"></i> 삭제
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-music fa-3x text-muted mb-3"></i>
+    <h3 class="text-muted">아직 찬양 순서가 없습니다</h3>
+    <p class="text-muted">첫 번째 찬양 순서를 작성해보세요!</p>
+    <a href="{{ url_for('new_post') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> 새 찬양 순서 작성
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(postId, postTitle) {
+    if (confirm(`"${postTitle}" 찬양 순서를 정말 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+        // 삭제 요청을 보냄
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/post/${postId}/delete`;
+        
+        // CSRF 토큰이 필요한 경우 (Flask-WTF 사용 시)
+        const csrfToken = document.querySelector('meta[name=csrf-token]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken.getAttribute('content');
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function duplicatePost(postId, postTitle) {
+    if (confirm(`"${postTitle}" 찬양 순서를 복제하시겠습니까?\n\n복제된 순서는 편집할 수 있습니다.`)) {
+        // 복제 요청을 보냄
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/post/${postId}/duplicate`;
+        
+        // CSRF 토큰이 필요한 경우 (Flask-WTF 사용 시)
+        const csrfToken = document.querySelector('meta[name=csrf-token]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken.getAttribute('content');
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %} 

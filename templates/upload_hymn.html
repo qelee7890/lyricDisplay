@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}찬송가 업로드{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-music"></i> 찬송가 업로드</h1>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus"></i> 새 찬송가 추가</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="hymnForm">
+                    <div class="mb-3">
+                        <label for="hymn_title" class="form-label">찬송가 제목 *</label>
+                        <input type="text" class="form-control" id="hymn_title" name="hymn_title" required 
+                               placeholder="예: 예수님은 누구신가">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hymn_number" class="form-label">찬송가 번호</label>
+                                <input type="number" class="form-control" id="hymn_number" name="hymn_number" 
+                                       min="1" placeholder="예: 94">
+                                <div class="form-text">기존 찬송가 번호가 있는 경우 입력하세요.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="new_hymn_number" class="form-label">새찬송가 번호</label>
+                                <input type="number" class="form-control" id="new_hymn_number" name="new_hymn_number" 
+                                       min="1" placeholder="예: 96">
+                                <div class="form-text">새찬송가 번호가 있는 경우 입력하세요.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="lyrics" class="form-label">가사 *</label>
+                        <textarea class="form-control" id="lyrics" name="lyrics" rows="15" required
+                                  placeholder="1절
+예수님은 누구신가 우는 자의 위로와
+없는 자의 풍성이며 천한 자의 높음과
+잡힌 자의 놓임 되고 우리 기쁨 되시네
+He is plenty for the needy
+Height for all of low degree.
+&quot;Who,&quot; you ask me, &quot;is my Jesus?&quot;
+Mourners' Comforter is He.
+He's the freedom of the captive,
+And our joy eternally.
+
+2절
+예수님은 누구신가 약한 자의 강함과
+...
+
+후렴
+후렴 가사가 있는 경우 여기에 작성하세요..."></textarea>
+                        <div class="form-text">
+                            <strong>가사 형식 안내:</strong><br>
+                            - 각 절은 "1절", "2절" 등으로 시작하세요<br>
+                            - 후렴이 있는 경우 "후렴"으로 표시하세요<br>
+                            - 한국어 가사와 영어 가사를 모두 입력할 수 있습니다<br>
+                            - 절과 절 사이는 한 줄 띄워주세요
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 찬송가 업로드
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> 업로드 가이드</h5>
+            </div>
+            <div class="card-body">
+                <h6>필수 정보</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> 찬송가 제목</li>
+                    <li><i class="fas fa-check text-success"></i> 가사</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>선택 정보</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-circle text-muted"></i> 찬송가 번호</li>
+                    <li><i class="fas fa-circle text-muted"></i> 새찬송가 번호</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>가사 작성 예시</h6>
+                <div class="small bg-light p-2 rounded">
+                    <pre>1절
+예수님은 누구신가 우는 자의 위로와
+없는 자의 풍성이며 천한 자의 높음과
+He is plenty for the needy
+Height for all of low degree.
+
+2절
+예수님은 누구신가 약한 자의 강함과
+...
+
+후렴
+후렴 가사...</pre>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list"></i> 최근 업로드</h5>
+            </div>
+            <div class="card-body">
+                <div id="recentHymns">
+                    <p class="text-muted">최근 업로드된 찬송가가 여기에 표시됩니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 폼 제출 시 로딩 표시
+document.getElementById('hymnForm').addEventListener('submit', function() {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 업로드 중...';
+    submitBtn.disabled = true;
+});
+
+// 최근 업로드 목록 로드
+function loadRecentHymns() {
+    const recentHymns = document.getElementById('recentHymns');
+    recentHymns.innerHTML = `
+        <div class="list-group list-group-flush">
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">예수님은 누구신가</h6>
+                    <small class="text-muted">94장</small>
+                </div>
+                <span class="badge bg-success">완료</span>
+            </div>
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">찬미하세</h6>
+                    <small class="text-muted">1장</small>
+                </div>
+                <span class="badge bg-success">완료</span>
+            </div>
+        </div>
+    `;
+}
+
+// 페이지 로드 시 최근 업로드 목록 로드
+document.addEventListener('DOMContentLoaded', loadRecentHymns);
+</script>
+{% endblock %}

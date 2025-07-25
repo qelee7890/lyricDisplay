@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}찬송가 {{ hymn_number }}장 수정{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-edit"></i> 찬송가 {{ hymn_number }}장 수정</h1>
+            <a href="{{ url_for('search') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 검색으로 돌아가기
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-music"></i> 찬송가 정보</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">찬송가 제목</label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ hymn_info.hymnTitle if hymn_info else '' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="new_number" class="form-label">새찬송가 번호</label>
+                                <input type="text" class="form-control" id="new_number" name="new_number" 
+                                       value="{{ hymn_info.newHymnNumber if hymn_info else '' }}" 
+                                       placeholder="새찬송가 번호를 입력하세요">
+                                <div class="form-text">새찬송가 번호를 직접 수정할 수 있습니다.</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="lyrics" class="form-label">가사</label>
+                        <textarea class="form-control" id="lyrics" name="lyrics" rows="15" 
+                                  placeholder="찬송가 가사를 입력하세요...">{{ lyrics if lyrics else '' }}</textarea>
+                        <div class="form-text">
+                            가사는 절별로 구분하여 입력하세요. 예: 1절, 2절, 후렴 등
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-outline-secondary" onclick="previewLyrics()">
+                            <i class="fas fa-eye"></i> 미리보기
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 저장
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> 수정 가이드</h5>
+            </div>
+            <div class="card-body">
+                <h6>가사 입력 형식</h6>
+                <div class="border rounded p-3 bg-light">
+                    <pre class="mb-0 small">1절
+예수님은 누구신가 우는 자의 위로와
+없는 자의 풍성이며 천한 자의 높음과
+
+2절
+예수님은 누구신가 약한 자의 강함과
+눈먼 자의 빛이시며 병든 자의 고침과
+
+후렴
+할렐루야 할렐루야
+우리 주 예수님</pre>
+                </div>
+                
+                <hr>
+                
+                <h6>주의사항</h6>
+                <ul class="small">
+                    <li>절 구분은 명확하게 해주세요</li>
+                    <li>한글과 영어 가사 모두 입력 가능합니다</li>
+                    <li>저장 후 프레젠테이션에서 확인하세요</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-eye"></i> 미리보기</h5>
+            </div>
+            <div class="card-body">
+                <div id="lyricsPreview">
+                    <p class="text-muted">미리보기 버튼을 클릭하면 가사가 여기에 표시됩니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 미리보기 모달 -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ hymn_number }}장. {{ hymn_info.hymnTitle if hymn_info else '찬송가' }} - 미리보기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalPreview"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function previewLyrics() {
+    const lyrics = document.getElementById('lyrics').value;
+    const title = document.getElementById('title').value;
+    const hymnNumber = '{{ hymn_number }}';
+    
+    if (!lyrics.trim()) {
+        alert('가사를 입력해주세요.');
+        return;
+    }
+    
+    // 가사를 절별로 분리
+    const verses = parseLyrics(lyrics);
+    
+    // 미리보기 생성 - 한글-영문 쌍별로 별도 블록 생성
+    let previewHtml = '';
+    verses.forEach((verse, index) => {
+        // 각 절의 가사를 한글-영문 쌍으로 처리
+        const contentLines = verse.content.split('\n');
+        let currentKorean = [];
+        let currentEnglish = [];
+        let pairIndex = 0;
+        
+        const processPair = () => {
+            if (currentKorean.length > 0 || currentEnglish.length > 0) {
+                let pairContent = '';
+                if (currentKorean.length > 0) {
+                    pairContent += currentKorean.map(l => `<p class="mb-1">${l}</p>`).join('');
+                }
+                if (currentEnglish.length > 0) {
+                    pairContent += currentEnglish.map(l => `<p class="mb-1">${l}</p>`).join('');
+                }
+                
+                previewHtml += `
+                    <div class="border rounded p-3 mb-3">
+                        <h6 class="text-primary">${verse.title}</h6>
+                        <div class="mt-2">
+                            ${pairContent}
+                        </div>
+                    </div>
+                `;
+                
+                currentKorean = [];
+                currentEnglish = [];
+                pairIndex++;
+            }
+        };
+        
+        contentLines.forEach(line => {
+            if (!line.trim()) return;
+            
+            if (isKoreanLine(line)) {
+                // 이전 영문이 있었다면 쌍을 완성하고 새 블록 생성
+                if (currentEnglish.length > 0) {
+                    processPair();
+                }
+                currentKorean.push(line);
+            } else {
+                currentEnglish.push(line);
+            }
+        });
+        
+        // 마지막 쌍 처리
+        processPair();
+    });
+    
+    // 사이드바 미리보기 업데이트
+    document.getElementById('lyricsPreview').innerHTML = previewHtml;
+    
+    // 모달 미리보기 업데이트
+    document.getElementById('modalPreview').innerHTML = `
+        <div class="text-center mb-3">
+            <h4>${hymnNumber}장. ${title}</h4>
+        </div>
+        ${previewHtml}
+    `;
+    
+    // 모달 표시
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+}
+
+function parseLyrics(lyrics) {
+    const lines = lyrics.split('\n');
+    const verses = [];
+    let currentVerse = null;
+    
+    lines.forEach(line => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return;
+        
+        // 절 제목 확인 (숫자+절, 후렴 등)
+        if (/^\d+절$/.test(trimmedLine) || trimmedLine === '후렴' || trimmedLine === '코러스') {
+            if (currentVerse) {
+                verses.push(currentVerse);
+            }
+            currentVerse = {
+                title: trimmedLine,
+                content: ''
+            };
+        } else {
+            if (currentVerse) {
+                currentVerse.content += (currentVerse.content ? '\n' : '') + trimmedLine;
+            } else {
+                // 첫 번째 줄이 절 제목이 아닌 경우
+                currentVerse = {
+                    title: '1절',
+                    content: trimmedLine
+                };
+            }
+        }
+    });
+    
+    if (currentVerse) {
+        verses.push(currentVerse);
+    }
+    
+    return verses;
+}
+
+function isKoreanLine(line) {
+    if (!line.trim()) return false;
+    
+    let koreanChars = 0;
+    let totalChars = 0;
+    
+    for (let char of line) {
+        if (/\s/.test(char) || /[.,!?]/.test(char)) continue;
+        totalChars++;
+        // 한글 범위: 가-힣 (AC00-D7AF)
+        if (char >= '\uAC00' && char <= '\uD7AF') {
+            koreanChars++;
+        }
+    }
+    
+    // 전체 문자의 50% 이상이 한글이면 한글 라인으로 판정
+    return totalChars > 0 && (koreanChars / totalChars) >= 0.5;
+}
+
+// 자동 저장 기능 (선택사항)
+let autoSaveTimer;
+document.getElementById('lyrics').addEventListener('input', function() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(function() {
+        // 자동 저장 로직 (필요시 구현)
+        console.log('자동 저장 중...');
+    }, 3000);
+});
+</script>
+{% endblock %} 
