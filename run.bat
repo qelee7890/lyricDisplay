@@ -4,6 +4,40 @@ echo ============================================
 echo 찬양 가사 프레젠테이션 웹앱 설치 및 실행
 echo ============================================
 
+:: Check if Git is installed
+git --version >nul 2>&1
+if errorlevel 1 (
+    echo Git이 설치되어 있지 않습니다. Git을 먼저 설치해주세요.
+    echo Git 공식 웹사이트: https://git-scm.com/downloads
+    pause
+    exit /b 1
+)
+
+echo Git이 설치되어 있습니다.
+
+:: Check if this is a git repository
+if exist ".git" (
+    echo.
+    echo Git 저장소에서 최신 코드를 가져오는 중...
+    git pull origin main
+    if errorlevel 1 (
+        echo.
+        echo Git pull 중 오류가 발생했습니다. 수동으로 확인해주세요.
+        echo 그래도 계속 진행합니다...
+        echo.
+    ) else (
+        echo.
+        echo 최신 코드 업데이트가 완료되었습니다.
+        echo.
+    )
+) else (
+    echo.
+    echo Git 저장소가 아닙니다. 최신 코드 업데이트를 건너뜁니다.
+    echo 최신 코드를 사용하려면 다음 명령어로 클론하세요:
+    echo git clone https://github.com/qelee7890/lyricDisplay.git
+    echo.
+)
+
 :: Check if Python is installed
 python --version >nul 2>&1
 if errorlevel 1 (
