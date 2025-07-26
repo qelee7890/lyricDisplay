@@ -76,11 +76,17 @@ echo.
 
 :: Start the web application
 echo 웹앱을 시작하는 중...
-echo 브라우저에서 http://127.0.0.1:5001 로 접속하세요.
+echo 5초 후 브라우저가 자동으로 열립니다.
+echo.
+echo ※ "개발 서버" 경고 메시지는 교회/개인 사용시 무시하셔도 됩니다.
 echo.
 echo 종료하려면 Ctrl+C를 누르세요.
 echo.
 
+:: Start browser after 5 seconds in background
+start /B timeout /t 5 /nobreak >nul && start http://127.0.0.1:5001
+
+:: Start Flask application (this will block and show logs)
 python app.py
 
 pause
