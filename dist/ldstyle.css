@@ -347,6 +347,17 @@ section.has-dark-background h6 {
   border-bottom: 3px solid;
 }
 
+/* 긴 제목에 대한 폰트 크기 축소 클래스들 */
+.reveal table th.medium-title,
+.reveal table td.medium-title {
+  font-size: 1.0em !important;
+}
+
+.reveal table th.long-title,
+.reveal table td.long-title {
+  font-size: 0.8em !important;
+}
+
 .reveal table th[align='center'],
 .reveal table td[align='center'] {
   text-align: center;

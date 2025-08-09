@@ -109,7 +109,7 @@
                             {% for verse in verses %}
                                 {% if verse.strip() %}
                                     <section data-transition="none" {% if song.background_image %}data-background="{{ url_for('serve_dist_file', filename=song.background_image.replace("dist/", "")) }}"{% endif %}>
-                                        <h2>{% if song.hymn_number %}{{ song.hymn_number }}장<a>(새{{ song.hymn_number }})</a>{% endif %}. {{ song.title }}</h2>
+                                        <h2>{% if song.hymn_number %}{% set hymn_info = get_hymn_info(song.hymn_number) %}{{ song.hymn_number }}장<a>(새{{ hymn_info.newHymnNumber if hymn_info and hymn_info.newHymnNumber else song.hymn_number }})</a>{% endif %}. {{ song.title }}</h2>
                                         <div class="imageblock">
                                             <p>
                                                 {% set clean_verse = verse.strip() %}
@@ -263,10 +263,34 @@
             }
         }
         
-        // 슬라이드 변경 시 비디오 컨트롤 상태 업데이트
+        // 긴 제목에 대한 폰트 크기 자동 조정 함수
+        function adjustTitleFontSize() {
+            // 테이블의 세 번째 열(제목 열)의 모든 셀을 찾기
+            const titleCells = document.querySelectorAll('.reveal table th:nth-child(3), .reveal table td:nth-child(3)');
+            
+            titleCells.forEach(cell => {
+                const text = cell.textContent.trim();
+                const textLength = text.length;
+                
+                // 기존 클래스 제거
+                cell.classList.remove('medium-title', 'long-title');
+                
+                // 텍스트 길이에 따라 클래스 추가
+                if (textLength >= 18 && textLength < 25) {
+                    cell.classList.add('medium-title');
+                } else if (textLength >= 25) {
+                    cell.classList.add('long-title');
+                }
+            });
+        }
+        
+        // 슬라이드 변경 시 비디오 컨트롤 상태 업데이트 및 제목 폰트 크기 조정
         Reveal.addEventListener('slidechanged', function(event) {
             const currentSlide = event.currentSlide;
             const videoControls = currentSlide.querySelector('.video-controls');
+            
+            // 제목 폰트 크기 조정
+            adjustTitleFontSize();
             
             if (videoControls) {
                 setTimeout(() => {
@@ -298,6 +322,11 @@
                     }
                 }, 100);
             }
+        });
+        
+        // 초기 로딩 시에도 제목 폰트 크기 조정
+        Reveal.addEventListener('ready', function(event) {
+            adjustTitleFontSize();
         });
     </script>
 </body>

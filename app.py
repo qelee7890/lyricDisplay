@@ -662,7 +662,7 @@ def presentation(post_id):
         if song.song_type == 'hymn' and not song.lyrics:
             song.lyrics = get_hymn_lyrics(song.hymn_number)
     
-    return render_template('presentation.html', post=post, get_ccm_images=get_ccm_images, get_ccm_lyrics=get_ccm_lyrics, has_ccm_lyrics=has_ccm_lyrics, parse_ccm_lyrics=parse_ccm_lyrics)
+    return render_template('presentation.html', post=post, get_ccm_images=get_ccm_images, get_ccm_lyrics=get_ccm_lyrics, has_ccm_lyrics=has_ccm_lyrics, parse_ccm_lyrics=parse_ccm_lyrics, get_hymn_info=get_hymn_info)
 
 @app.route('/search')
 def search():
