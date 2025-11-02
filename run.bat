@@ -19,10 +19,13 @@ echo Git이 설치되어 있습니다.
 if exist ".git" (
     echo.
     echo Git 저장소에서 최신 코드를 가져오는 중...
-    git pull origin main
+    echo 로컬 변경사항을 무시하고 원격 저장소로 덮어씁니다...
+    git fetch origin main
+    git reset --hard origin/main
+    git clean -fd
     if errorlevel 1 (
         echo.
-        echo Git pull 중 오류가 발생했습니다. 수동으로 확인해주세요.
+        echo Git 업데이트 중 오류가 발생했습니다. 수동으로 확인해주세요.
         echo 그래도 계속 진행합니다...
         echo.
     ) else (
