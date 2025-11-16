@@ -1,42 +1,42 @@
 @echo off
 chcp 65001 >nul
 echo ============================================
-echo ì°¬ì–‘ ê°€ì‚¬ í”„ë ˆì  í…Œì´ì…˜ ì›¹ì•± ì„¤ì¹˜ ë° ì‹¤í–‰
+echo Âù¾ç °¡»ç ÇÁ·¹Á¨Å×ÀÌ¼Ç À¥¾Û ¼³Ä¡ ¹× ½ÇÇà
 echo ============================================
 
 :: Check if Git is installed
 git --version >nul 2>&1
 if errorlevel 1 (
-    echo Gitì´ ì„¤ì¹˜ë˜ì–´ ìžˆì§€ ì•ŠìŠµë‹ˆë‹¤. Gitì„ ë¨¼ì € ì„¤ì¹˜í•´ì£¼ì„¸ìš”.
-    echo Git ê³µì‹ ì›¹ì‚¬ì´íŠ¸: https://git-scm.com/downloads
+    echo GitÀÌ ¼³Ä¡µÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù. GitÀ» ¸ÕÀú ¼³Ä¡ÇØÁÖ¼¼¿ä.
+    echo Git °ø½Ä À¥»çÀÌÆ®: https://git-scm.com/downloads
     pause
     exit /b 1
 )
 
-echo Gitì´ ì„¤ì¹˜ë˜ì–´ ìžˆìŠµë‹ˆë‹¤.
+echo GitÀÌ ¼³Ä¡µÇ¾î ÀÖ½À´Ï´Ù.
 
 :: Check if this is a git repository
 if exist ".git" (
     echo.
-    echo Git ì €ìž¥ì†Œì—ì„œ ìµœì‹  ì½”ë“œë¥¼ ê°€ì ¸ì˜¤ëŠ” ì¤‘...
-    echo ë¡œì»¬ ë³€ê²½ì‚¬í•­ì„ ë¬´ì‹œí•˜ê³  ì›ê²© ì €ìž¥ì†Œë¡œ ë®ì–´ì”ë‹ˆë‹¤...
+    echo Git ÀúÀå¼Ò¿¡¼­ ÃÖ½Å ÄÚµå¸¦ °¡Á®¿À´Â Áß...
+    echo ·ÎÄÃ º¯°æ»çÇ×À» ¹«½ÃÇÏ°í ¿ø°Ý ÀúÀå¼Ò·Î µ¤¾î¾¹´Ï´Ù...
     git fetch origin main
     git reset --hard origin/main
     git clean -fd
     if errorlevel 1 (
         echo.
-        echo Git ì—…ë°ì´íŠ¸ ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤. ìˆ˜ë™ìœ¼ë¡œ í™•ì¸í•´ì£¼ì„¸ìš”.
-        echo ê·¸ëž˜ë„ ê³„ì† ì§„í–‰í•©ë‹ˆë‹¤...
+        echo Git ¾÷µ¥ÀÌÆ® Áß ¿À·ù°¡ ¹ß»ýÇß½À´Ï´Ù. ¼öµ¿À¸·Î È®ÀÎÇØÁÖ¼¼¿ä.
+        echo ±×·¡µµ °è¼Ó ÁøÇàÇÕ´Ï´Ù...
         echo.
     ) else (
         echo.
-        echo ìµœì‹  ì½”ë“œ ì—…ë°ì´íŠ¸ê°€ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.
+        echo ÃÖ½Å ÄÚµå ¾÷µ¥ÀÌÆ®°¡ ¿Ï·áµÇ¾ú½À´Ï´Ù.
         echo.
     )
 ) else (
     echo.
-    echo Git ì €ìž¥ì†Œê°€ ì•„ë‹™ë‹ˆë‹¤. ìµœì‹  ì½”ë“œ ì—…ë°ì´íŠ¸ë¥¼ ê±´ë„ˆëœë‹ˆë‹¤.
-    echo ìµœì‹  ì½”ë“œë¥¼ ì‚¬ìš©í•˜ë ¤ë©´ ë‹¤ìŒ ëª…ë ¹ì–´ë¡œ í´ë¡ í•˜ì„¸ìš”:
+    echo Git ÀúÀå¼Ò°¡ ¾Æ´Õ´Ï´Ù. ÃÖ½Å ÄÚµå ¾÷µ¥ÀÌÆ®¸¦ °Ç³Ê¶Ý´Ï´Ù.
+    echo ÃÖ½Å ÄÚµå¸¦ »ç¿ëÇÏ·Á¸é ´ÙÀ½ ¸í·É¾î·Î Å¬·ÐÇÏ¼¼¿ä:
     echo git clone https://github.com/qelee7890/lyricDisplay.git
     echo.
 )
@@ -44,28 +44,28 @@ if exist ".git" (
 :: Check if Python is installed
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo Pythonì´ ì„¤ì¹˜ë˜ì–´ ìžˆì§€ ì•ŠìŠµë‹ˆë‹¤. Pythonì„ ë¨¼ì € ì„¤ì¹˜í•´ì£¼ì„¸ìš”.
-    echo Python ê³µì‹ ì›¹ì‚¬ì´íŠ¸: https://www.python.org/downloads/
+    echo PythonÀÌ ¼³Ä¡µÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù. PythonÀ» ¸ÕÀú ¼³Ä¡ÇØÁÖ¼¼¿ä.
+    echo Python °ø½Ä À¥»çÀÌÆ®: https://www.python.org/downloads/
     pause
     exit /b 1
 )
 
-echo Pythonì´ ì„¤ì¹˜ë˜ì–´ ìžˆìŠµë‹ˆë‹¤.
+echo PythonÀÌ ¼³Ä¡µÇ¾î ÀÖ½À´Ï´Ù.
 
 :: Install required packages
-echo í•„ìš”í•œ Python íŒ¨í‚¤ì§€ë¥¼ ì„¤ì¹˜í•˜ëŠ” ì¤‘...
+echo ÇÊ¿äÇÑ Python ÆÐÅ°Áö¸¦ ¼³Ä¡ÇÏ´Â Áß...
 pip install Flask==2.3.3
 pip install Flask-SQLAlchemy==3.0.5
 pip install Werkzeug==2.3.7
 
 if errorlevel 1 (
-    echo íŒ¨í‚¤ì§€ ì„¤ì¹˜ ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.
+    echo ÆÐÅ°Áö ¼³Ä¡ Áß ¿À·ù°¡ ¹ß»ýÇß½À´Ï´Ù.
     pause
     exit /b 1
 )
 
 echo.
-echo íŒ¨í‚¤ì§€ ì„¤ì¹˜ê°€ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.
+echo ÆÐÅ°Áö ¼³Ä¡°¡ ¿Ï·áµÇ¾ú½À´Ï´Ù.
 echo.
 
 :: Create dist directory if it doesn't exist
@@ -74,16 +74,16 @@ if not exist "dist\hymn" mkdir dist\hymn
 if not exist "dist\ccm" mkdir dist\ccm
 if not exist "dist\media" mkdir dist\media
 
-echo í•„ìš”í•œ ë””ë ‰í† ë¦¬ë¥¼ ìƒì„±í–ˆìŠµë‹ˆë‹¤.
+echo ÇÊ¿äÇÑ µð·ºÅä¸®¸¦ »ý¼ºÇß½À´Ï´Ù.
 echo.
 
 :: Start the web application
-echo ì›¹ì•±ì„ ì‹œìž‘í•˜ëŠ” ì¤‘...
-echo 5ì´ˆ í›„ ë¸Œë¼ìš°ì €ê°€ ìžë™ìœ¼ë¡œ ì—´ë¦½ë‹ˆë‹¤.
+echo À¥¾ÛÀ» ½ÃÀÛÇÏ´Â Áß...
+echo 5ÃÊ ÈÄ ºê¶ó¿ìÀú°¡ ÀÚµ¿À¸·Î ¿­¸³´Ï´Ù.
 echo.
-echo â€» "ê°œë°œ ì„œë²„" ê²½ê³  ë©”ì‹œì§€ëŠ” êµíšŒ/ê°œì¸ ì‚¬ìš©ì‹œ ë¬´ì‹œí•˜ì…”ë„ ë©ë‹ˆë‹¤.
+echo ¡Ø "°³¹ß ¼­¹ö" °æ°í ¸Þ½ÃÁö´Â ±³È¸/°³ÀÎ »ç¿ë½Ã ¹«½ÃÇÏ¼Åµµ µË´Ï´Ù.
 echo.
-echo ì¢…ë£Œí•˜ë ¤ë©´ Ctrl+Cë¥¼ ëˆ„ë¥´ì„¸ìš”.
+echo Á¾·áÇÏ·Á¸é Ctrl+C¸¦ ´©¸£¼¼¿ä.
 echo.
 
 :: Start browser after 5 seconds in background
