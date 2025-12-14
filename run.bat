@@ -1,105 +1,88 @@
 @echo off
-chcp 65001 >nul
-title Âù¾ç °¡»ç ÇÁ·¹Á¨Å×ÀÌ¼Ç À¥¾Û (Auto Update & Run)
+chcp 65001 >NUL
+title ì°¬ì–‘ ê°€ì‚¬ ì• í”Œë¦¬ì¼€ì´ì…˜ ì‹¤í–‰
 
 echo ========================================================
-echo  Âù¾ç °¡»ç ÇÁ·¹Á¨Å×ÀÌ¼Ç À¥¾Û - ¾÷µ¥ÀÌÆ® ¹× ½ÇÇà ¸ğµå
+echo  ì°¬ì–‘ ê°€ì‚¬ ì• í”Œë¦¬ì¼€ì´ì…˜ ì‹¤í–‰
 echo ========================================================
 echo.
 
-:: 1. Git ¼³Ä¡ È®ÀÎ
-git --version >nul 2>&1
+:: 1. Git ì„¤ì¹˜ í™•ì¸
+git --version >NUL 2>&1
 if errorlevel 1 (
-    echo [¿À·ù] GitÀÌ ¼³Ä¡µÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.
-    echo GitÀ» ¸ÕÀú ¼³Ä¡ÇØÁÖ¼¼¿ä: https://git-scm.com/downloads
+    echo [ì˜¤ë¥˜] Gitì´ ì„¤ì¹˜ë˜ì–´ ìˆì§€ ì•ŠìŠµë‹ˆë‹¤.
+    echo Gitì„ ë¨¼ì € ì„¤ì¹˜í•´ì£¼ì„¸ìš”: https://git-scm.com/downloads
+    echo.
     pause
     exit /b 1
 )
-echo [OK] Git ¼³Ä¡ È®ÀÎµÊ.
+echo [OK] Git ì„¤ì¹˜ í™•ì¸ë¨.
 
-:: 2. Git ÀúÀå¼Ò È®ÀÎ ¹× °­Á¦ ¾÷µ¥ÀÌÆ® (ÇÙ½É ·ÎÁ÷)
+:: 2. Python ì„¤ì¹˜ í™•ì¸
+python --version >NUL 2>&1
+if errorlevel 1 (
+    echo [ì˜¤ë¥˜] Pythonì´ ì„¤ì¹˜ë˜ì–´ ìˆì§€ ì•ŠìŠµë‹ˆë‹¤.
+    echo Pythonì„ ë¨¼ì € ì„¤ì¹˜í•´ì£¼ì„¸ìš”: https://www.python.org/downloads/
+    echo.
+    pause
+    exit /b 1
+)
+echo [OK] Python ì„¤ì¹˜ í™•ì¸ë¨.
+
+:: 3. ì—…ë°ì´íŠ¸ ì—¬ë¶€ í™•ì¸ (ì„ íƒì‚¬í•­)
 if exist ".git" (
     echo.
-    echo [¾÷µ¥ÀÌÆ® ½ÃÀÛ] ¿ø°İ ÀúÀå¼Ò¿Í µ¿±âÈ­¸¦ ÁøÇàÇÕ´Ï´Ù...
-    echo --------------------------------------------------------
-    
-    :: ¿ø°İ ÀúÀå¼Ò Á¤º¸ °»½Å
-    echo 1/4. ¿ø°İ ÀúÀå¼Ò Á¤º¸ °¡Á®¿À´Â Áß (Fetch)...
-    git fetch origin main
-
-    :: ¸ŞÀÎ ºê·£Ä¡·Î ÀüÈ¯ (È¤½Ã ´Ù¸¥ ºê·£Ä¡¿¡ ÀÖÀ» °æ¿ì ´ëºñ)
-    echo 2/4. Main ºê·£Ä¡·Î ÀüÈ¯ Áß...
-    git checkout main
-
-    :: ·ÎÄÃ º¯°æ»çÇ× ¹«½ÃÇÏ°í ¿ø°İ ³»¿ëÀ¸·Î µ¤¾î¾²±â
-    echo 3/4. ·ÎÄÃ º¯°æ»çÇ× µ¤¾î¾²´Â Áß (Reset --hard)...
-    git reset --hard origin/main
-
-    :: ÃßÀûµÇÁö ¾Ê´Â ÆÄÀÏ(»õ·Î ¸¸µç ÆÄÀÏ µî) »èÁ¦
-    echo 4/4. ºÒÇÊ¿äÇÑ ÆÄÀÏ Á¤¸® Áß (Clean)...
-    git clean -fd
-
-    if errorlevel 1 (
-        echo.
-        echo [°æ°í] Git ¾÷µ¥ÀÌÆ® Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.
-        echo ³×Æ®¿öÅ© »óÅÂ³ª ÀúÀå¼Ò ¼³Á¤À» È®ÀÎÇØÁÖ¼¼¿ä.
-        echo ±âÁ¸ ¹öÀüÀ¸·Î ½ÇÇàÀ» °è¼ÓÇÕ´Ï´Ù...
+    echo ìµœì‹  ì½”ë“œë¡œ ì—…ë°ì´íŠ¸í•˜ì‹œê² ìŠµë‹ˆê¹Œ?
+    echo [ì£¼ì˜] ë¡œì»¬ ë³€ê²½ì‚¬í•­ì€ ëª¨ë‘ ì‚­ì œë©ë‹ˆë‹¤.
+    echo.
+    choice /C YN /M "ì—…ë°ì´íŠ¸ë¥¼ ì§„í–‰í•˜ì‹œê² ìŠµë‹ˆê¹Œ"
+    if errorlevel 2 (
+        echo ì—…ë°ì´íŠ¸ë¥¼ ê±´ë„ˆëœë‹ˆë‹¤.
     ) else (
         echo.
-        echo [¿Ï·á] ÃÖ½Å ¹öÀüÀ¸·Î ¾÷µ¥ÀÌÆ®µÇ¾ú½À´Ï´Ù.
-        echo --------------------------------------------------------
+        echo [ì—…ë°ì´íŠ¸ ì‹œì‘] ìµœì‹  ì½”ë“œë¡œ ë™ê¸°í™”í•©ë‹ˆë‹¤...
+        git fetch origin main
+        git checkout main
+        git reset --hard origin/main
+        git clean -fd
+        echo [ì™„ë£Œ] ì—…ë°ì´íŠ¸ ì™„ë£Œ. ìŠ¤í¬ë¦½íŠ¸ë¥¼ ë‹¤ì‹œ ì‹¤í–‰í•©ë‹ˆë‹¤...
+        echo.
+        pause
+        start "" "%~f0"
+        exit
     )
-) else (
-    echo.
-    echo [¾Ë¸²] ÇöÀç Æú´õ´Â Git ÀúÀå¼Ò°¡ ¾Æ´Õ´Ï´Ù.
-    echo ÀÚµ¿ ¾÷µ¥ÀÌÆ® ±â´ÉÀ» »ç¿ëÇÒ ¼ö ¾ø½À´Ï´Ù.
-    echo (ÃÖÃÊ 1È¸´Â git cloneÀ¸·Î ´Ù¿î·Îµå ¹Ş¾Æ¾ß ÇÕ´Ï´Ù)
-    echo.
 )
 
-:: 3. Python ¼³Ä¡ È®ÀÎ
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo [¿À·ù] PythonÀÌ ¼³Ä¡µÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.
-    echo PythonÀ» ¸ÕÀú ¼³Ä¡ÇØÁÖ¼¼¿ä: https://www.python.org/downloads/
-    pause
-    exit /b 1
-)
-echo [OK] Python ¼³Ä¡ È®ÀÎµÊ.
-
-:: 4. ÇÊ¼ö ÆĞÅ°Áö ¼³Ä¡ (¹öÀü °íÁ¤)
+:: 4. í•„ìˆ˜ íŒ¨í‚¤ì§€ ì„¤ì¹˜
 echo.
-echo [¼³Á¤] ÇÊ¿äÇÑ Python ¶óÀÌºê·¯¸® È®ÀÎ ¹× ¼³Ä¡ Áß...
-pip install Flask==2.3.3
-pip install Flask-SQLAlchemy==3.0.5
-pip install Werkzeug==2.3.7
+echo [ì§„í–‰] Python ë¼ì´ë¸ŒëŸ¬ë¦¬ ì„¤ì¹˜ ì¤‘...
+pip install -q Flask==2.3.3
+pip install -q Flask-SQLAlchemy==3.0.5
+pip install -q Werkzeug==2.3.7
+echo [OK] íŒ¨í‚¤ì§€ ì„¤ì¹˜ ì™„ë£Œ
 
-if errorlevel 1 (
-    echo [¿À·ù] ÆĞÅ°Áö ¼³Ä¡¿¡ ½ÇÆĞÇß½À´Ï´Ù.
-    pause
-    exit /b 1
-)
-
-:: 5. µ¥ÀÌÅÍ µğ·ºÅä¸® »ı¼º (¾øÀ» °æ¿ì¿¡¸¸)
+:: 5. í•„ìˆ˜ ë””ë ‰í† ë¦¬ ìƒì„±
 if not exist "dist" mkdir dist
 if not exist "dist\hymn" mkdir dist\hymn
 if not exist "dist\ccm" mkdir dist\ccm
 if not exist "dist\media" mkdir dist\media
 
-:: 6. À¥¾Û ½ÇÇà
+:: 6. ì•± ì‹¤í–‰
 echo.
 echo ========================================================
-echo  ¸ğµç ÁØºñ°¡ ¿Ï·áµÇ¾ú½À´Ï´Ù. À¥¾ÛÀ» ½ÃÀÛÇÕ´Ï´Ù.
-echo  Àá½Ã ÈÄ ºê¶ó¿ìÀú°¡ ÀÚµ¿À¸·Î ¿­¸³´Ï´Ù. (http://127.0.0.1:5001)
+echo  ì„œë²„ë¥¼ ì‹œì‘í•©ë‹ˆë‹¤.
+echo  ë¸Œë¼ìš°ì €ì—ì„œ http://127.0.0.1:5001 ì„ ì—¬ì„¸ìš”.
 echo ========================================================
 echo.
-echo ¡Ø Á¾·áÇÏ·Á¸é ÀÌ Ã¢¿¡¼­ [Ctrl + C]¸¦ ´©¸£¼¼¿ä.
+echo ì•± ì¢…ë£Œ: ì´ ì°½ì—ì„œ [Ctrl + C] ëˆ„ë¥´ê¸°
 echo.
 
-:: ¹é±×¶ó¿îµå¿¡¼­ 5ÃÊ ´ë±â ÈÄ ºê¶ó¿ìÀú ½ÇÇà
-start /B timeout /t 5 /nobreak >nul && start http://127.0.0.1:5001
+:: 5ì´ˆ í›„ ë¸Œë¼ìš°ì € ìë™ ì—´ê¸°
+start /B timeout /t 5 /nobreak >NUL && start http://127.0.0.1:5001
 
-:: Flask ¾ÖÇÃ¸®ÄÉÀÌ¼Ç ½ÇÇà
+:: Flask ì‹¤í–‰
 python app.py
 
+echo.
+echo ì•±ì´ ì¢…ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.
 pause
