@@ -486,41 +486,48 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('updateSongList call completed');
 });
 
-// 검색 기능 (IME 지원)
+// 검색 기능 (IME 지원 + 디바운싱)
 let isComposingSearch = false;
+let searchTimeout = null;
+
+// 디바운스된 검색 함수 (300ms 대기)
+function debouncedSearch(query) {
+    // 이전 타이머 취소
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+
+    // 새 타이머 설정
+    searchTimeout = setTimeout(function() {
+        if (query.length > 0) {
+            searchSongs(query);
+        } else {
+            document.getElementById('searchResults').innerHTML = '';
+        }
+    }, 300); // 300ms 대기
+}
 
 document.getElementById('searchInput').addEventListener('compositionstart', function() {
     isComposingSearch = true;
 });
 
 document.getElementById('searchInput').addEventListener('compositionupdate', function() {
-    const query = this.value.trim();
-    if (query.length > 0) {
-        searchSongs(query);
-    } else {
-        document.getElementById('searchResults').innerHTML = '';
-    }
+    isComposingSearch = true;
 });
 
 document.getElementById('searchInput').addEventListener('compositionend', function() {
     isComposingSearch = false;
+    // 조합이 끝난 후 디바운스된 검색 실행
     const query = this.value.trim();
-    if (query.length > 0) {
-        searchSongs(query);
-    } else {
-        document.getElementById('searchResults').innerHTML = '';
-    }
+    debouncedSearch(query);
 });
 
 document.getElementById('searchInput').addEventListener('input', function() {
     if (isComposingSearch) return; // IME 조합 중이면 무시
-    
+
+    // 영문, 숫자 등 조합이 필요 없는 입력도 디바운싱 적용
     const query = this.value.trim();
-    if (query.length > 0) {
-        searchSongs(query);
-    } else {
-        document.getElementById('searchResults').innerHTML = '';
-    }
+    debouncedSearch(query);
 });
 
 function searchSongs(query) {

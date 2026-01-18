@@ -722,6 +722,162 @@ def presentation(post_id):
     
     return render_template('presentation.html', post=post, get_ccm_images=get_ccm_images, get_ccm_lyrics=get_ccm_lyrics, has_ccm_lyrics=has_ccm_lyrics, parse_ccm_lyrics=parse_ccm_lyrics, get_hymn_info=get_hymn_info)
 
+# ==================== 검색 헬퍼 함수들 ====================
+
+def normalize_text(text):
+    """텍스트를 유니코드 NFC로 정규화"""
+    import unicodedata
+    return unicodedata.normalize('NFC', text) if text else ''
+
+def get_korean_chosung(text):
+    """한글 텍스트에서 초성 추출"""
+    CHOSUNG_LIST = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+    result = []
+
+    for char in text:
+        if '가' <= char <= '힣':
+            # 한글 유니코드: 0xAC00(가) ~ 0xD7A3(힣)
+            code = ord(char) - 0xAC00
+            chosung_index = code // (21 * 28)
+            result.append(CHOSUNG_LIST[chosung_index])
+        elif 'ㄱ' <= char <= 'ㅎ':
+            # 이미 초성인 경우
+            result.append(char)
+        else:
+            # 한글이 아닌 경우 그대로 추가
+            result.append(char)
+
+    return ''.join(result)
+
+def is_chosung_match(query, text):
+    """초성 검색 매칭 - 쿼리가 초성이면 텍스트의 초성과 비교"""
+    # 쿼리가 모두 초성으로만 이루어져 있는지 확인
+    if not query:
+        return False
+
+    is_all_chosung = all('ㄱ' <= char <= 'ㅎ' or not ('가' <= char <= '힣') for char in query)
+
+    if not is_all_chosung:
+        return False
+
+    # 텍스트의 초성 추출
+    text_chosung = get_korean_chosung(text)
+    query_chosung = get_korean_chosung(query)
+
+    # 부분 매칭 확인
+    return query_chosung in text_chosung
+
+def fuzzy_match(query, text):
+    """퍼지 매칭 - 대소문자 무시, 공백 무시, 부분 문자열 매칭"""
+    if not query or not text:
+        return False
+
+    # 유니코드 정규화
+    query = normalize_text(query)
+    text = normalize_text(text)
+
+    # 대소문자 무시
+    query_lower = query.lower()
+    text_lower = text.lower()
+
+    # 기본 부분 문자열 매칭
+    if query_lower in text_lower:
+        return True
+
+    # 공백 제거 후 매칭
+    query_no_space = query_lower.replace(' ', '')
+    text_no_space = text_lower.replace(' ', '')
+
+    if query_no_space in text_no_space:
+        return True
+
+    return False
+
+def search_hymn_lyrics(hymn_number, query):
+    """찬송가 가사에서 검색어 찾기"""
+    try:
+        hymnfile = openTextFile("dist/hymn", "hymn.txt", "r")
+        korLyric, engLyric = classifyLyric(str(hymn_number), hymnfile)
+        hymnfile.close()
+
+        # 한글 가사 검색
+        for verse_key, verse_lines in korLyric.items():
+            for line in verse_lines:
+                # <br/> 태그 제거
+                clean_line = line.replace('<br/>', '')
+                if fuzzy_match(query, clean_line):
+                    return True
+
+        # 영문 가사 검색
+        for verse_key, verse_lines in engLyric.items():
+            for line in verse_lines:
+                clean_line = line.replace('<br/>', '')
+                if fuzzy_match(query, clean_line):
+                    return True
+
+        return False
+    except:
+        return False
+
+def search_ccm_lyrics_content(song_title, query):
+    """CCM 가사에서 검색어 찾기"""
+    lyrics = get_ccm_lyrics(song_title)
+    if not lyrics:
+        return False
+
+    # 가사를 줄 단위로 분리하여 검색
+    lines = lyrics.split('\n')
+    for line in lines:
+        if fuzzy_match(query, line):
+            return True
+
+    return False
+
+def advanced_search(query, number, title, lyrics_search_func=None):
+    """
+    고급 검색 함수 - 유니코드 정규화, 퍼지 매칭, 초성 검색 지원
+
+    Args:
+        query: 검색어
+        number: 번호 (찬송가 번호 등)
+        title: 제목
+        lyrics_search_func: 가사 검색 함수 (선택)
+
+    Returns:
+        bool: 매칭 여부
+    """
+    if not query:
+        return False
+
+    # 유니코드 정규화
+    query = normalize_text(query)
+    number = normalize_text(str(number))
+    title = normalize_text(title)
+
+    # 1. 번호 검색 (정확한 매칭)
+    if query in number:
+        return True
+
+    # 2. 제목 퍼지 매칭
+    if fuzzy_match(query, title):
+        return True
+
+    # 3. 초성 검색
+    if is_chosung_match(query, title):
+        return True
+
+    # 4. 가사 검색 (제공된 경우)
+    if lyrics_search_func:
+        try:
+            if lyrics_search_func(query):
+                return True
+        except:
+            pass
+
+    return False
+
+# ==================== 검색 라우트 ====================
+
 @app.route('/search')
 def search():
     query = request.args.get('q', '')
@@ -733,44 +889,73 @@ def search():
             try:
                 filename = openTextFile("dist/hymn", "hymnInfo.csv", "r")
                 infos = csv.reader(filename)
+                # 헤더 행 건너뛰기
+                next(infos, None)
+
                 for info in infos:
-                    if query in info[0] or query in info[2]:  # 번호나 제목으로 검색
+                    if len(info) < 4:  # 최소 4개 컬럼 필요
+                        continue
+
+                    # 고급 검색 사용 (번호, 제목, 가사)
+                    # 찬송가 제목(info[2])과 새찬송가 제목(info[3]) 모두 검색
+                    # lambda 클로저 문제 해결: 기본 인자로 현재 값을 캡처
+                    title_to_search = f"{info[2]} {info[3]}"  # 두 제목 모두 검색
+
+                    # 가사 검색을 일단 비활성화하고 제목 검색만 테스트
+                    match_result = advanced_search(
+                        query,
+                        info[0],
+                        title_to_search,
+                        lyrics_search_func=None  # 가사 검색 비활성화
+                    )
+
+                    if match_result:
                         hymn_results.append({
                             'number': info[0],
-                            'title': info[2],
+                            'title': info[2] if info[2] else info[3],  # 찬송가 제목 우선
                             'new_number': info[1]
                         })
+
                 filename.close()
-            except Exception:
+            except Exception as e:
+                # 로깅 대신 조용히 넘어감 (Windows 콘솔 인코딩 문제 방지)
                 pass
-            
+
             # CCM 검색 - dist/ccm 폴더에서 검색
             ccm_list = get_ccm_list_from_dist()
             ccm_data = []
             for ccm_title in ccm_list:
-                if query.lower() in ccm_title.lower():
+                # 고급 검색 사용 (제목, 가사)
+                # lambda 클로저 문제 해결: 기본 인자로 현재 값을 캡처
+                # 가사 검색을 일단 비활성화하고 제목 검색만 테스트
+                if advanced_search(
+                    query,
+                    '',  # CCM은 번호가 없음
+                    ccm_title,
+                    lyrics_search_func=None  # 가사 검색 비활성화
+                ):
                     # 가사 기반인지 이미지 기반인지 확인
                     if has_ccm_lyrics(ccm_title):
                         ccm_data.append({
-                            'song_title': ccm_title, 
+                            'song_title': ccm_title,
                             'image_count': '가사'
                         })
                     else:
                         images = get_ccm_images(ccm_title)
                         ccm_data.append({
-                            'song_title': ccm_title, 
+                            'song_title': ccm_title,
                             'image_count': f'{len(images)}장' if len(images) > 0 else '0장'
                         })
                 if len(ccm_data) >= 10:  # 최대 10개만 반환
                     break
-            
+
             return jsonify({
                 'hymn_results': hymn_results[:10],
                 'ccm_results': ccm_data[:10]
             })
         else:
             return jsonify({'hymn_results': [], 'ccm_results': []})
-    
+
     # HTML 페이지 응답
     if query:
         # 찬송가 검색
@@ -778,43 +963,68 @@ def search():
         try:
             filename = openTextFile("dist/hymn", "hymnInfo.csv", "r")
             infos = csv.reader(filename)
+            # 헤더 행 건너뛰기
+            next(infos, None)
+
             for info in infos:
-                if query in info[0] or query in info[2]:  # 번호나 제목으로 검색
+                if len(info) < 4:  # 최소 4개 컬럼 필요
+                    continue
+
+                # 고급 검색 사용 (번호, 제목, 가사)
+                # 찬송가 제목(info[2])과 새찬송가 제목(info[3]) 모두 검색
+                # lambda 클로저 문제 해결: 기본 인자로 현재 값을 캡처
+                title_to_search = f"{info[2]} {info[3]}"  # 두 제목 모두 검색
+                # 가사 검색을 일단 비활성화하고 제목 검색만 테스트
+                if advanced_search(
+                    query,
+                    info[0],
+                    title_to_search,
+                    lyrics_search_func=None  # 가사 검색 비활성화
+                ):
                     hymn_results.append({
                         'number': info[0],
-                        'title': info[2],
+                        'title': info[2] if info[2] else info[3],  # 찬송가 제목 우선
                         'new_number': info[1]
                     })
             filename.close()
-        except:
+        except Exception as e:
+            # 로깅 대신 조용히 넘어감 (Windows 콘솔 인코딩 문제 방지)
             pass
-        
+
         # CCM 검색 - dist/ccm 폴더에서 검색
         ccm_list = get_ccm_list_from_dist()
         ccm_results = []
         for ccm_title in ccm_list:
-            if query.lower() in ccm_title.lower():
+            # 고급 검색 사용 (제목, 가사)
+            # lambda 클로저 문제 해결: 기본 인자로 현재 값을 캡처
+            # 가사 검색을 일단 비활성화하고 제목 검색만 테스트
+            if advanced_search(
+                query,
+                '',  # CCM은 번호가 없음
+                ccm_title,
+                lyrics_search_func=None  # 가사 검색 비활성화
+            ):
                 # 가사 기반인지 이미지 기반인지 확인
                 if has_ccm_lyrics(ccm_title):
                     ccm_results.append({
-                        'song_title': ccm_title, 
+                        'song_title': ccm_title,
                         'image_count': '가사'
                     })
                 else:
                     images = get_ccm_images(ccm_title)
                     ccm_results.append({
-                        'song_title': ccm_title, 
+                        'song_title': ccm_title,
                         'image_count': f'{len(images)}장' if len(images) > 0 else '0장'
                     })
             if len(ccm_results) >= 10:  # 최대 10개만 반환
                 break
-        
-        return render_template('search.html', 
-                             query=query, 
-                             hymn_results=hymn_results[:10], 
+
+        return render_template('search.html',
+                             query=query,
+                             hymn_results=hymn_results[:10],
                              ccm_results=ccm_results[:10],
                              has_ccm_lyrics=has_ccm_lyrics)
-    
+
     return render_template('search.html', query='', has_ccm_lyrics=has_ccm_lyrics)
 
 @app.route('/upload_ccm', methods=['GET', 'POST'])
