@@ -181,84 +181,109 @@ def is_korean_line(line):
 def parse_ccm_lyrics(lyrics):
     """CCM 가사를 파싱하는 함수 - 한글-영문 쌍별로 개별 슬라이드 생성"""
     import re
-    
+
     if not lyrics:
         return {}
-    
+
     # 절 제목을 기준으로 분할 (정규식 사용)
     # "숫자절" 또는 "후렴"으로 시작하는 라인을 찾음
     verse_pattern = r'\n(?=\d+절|\b후렴\b)'
     sections = re.split(verse_pattern, lyrics.strip())
-    
-    # 먼저 총 절 수 계산 (숫자절만 카운트, 후렴 제외)
-    verse_numbers = set()
+
+    # 먼저 각 절과 후렴을 딕셔너리에 저장
+    verse_data = {}
+    chorus_data = None
+    verse_numbers = []
+
     for section in sections:
         section = section.strip()
         if not section:
             continue
+
         lines = section.split('\n')
         if not lines:
             continue
-        first_line = lines[0].strip()
-        if first_line.endswith('절') and first_line[:-1].isdigit():
-            verse_numbers.add(int(first_line[:-1]))
-    
-    total_verses = len(verse_numbers)
-    
-    parsed_verses = {}
-    slide_index = 0
-    
-    for section in sections:
-        section = section.strip()
-        if not section:
-            continue
-            
-        lines = section.split('\n')
-        if not lines:
-            continue
-            
+
         # 첫 줄에서 절 번호 추출
         first_line = lines[0].strip()
         if first_line.endswith('절') and first_line[:-1].isdigit():
             verse_key = first_line[:-1]
             content_lines = lines[1:]
+            verse_numbers.append(int(verse_key))
+
+            # 빈 줄을 유지하면서 <br/> 태그 추가 (빈 줄은 슬라이드 구분자로 사용)
+            formatted_lines = []
+            for line in content_lines:
+                if line.strip():
+                    formatted_lines.append(line.strip() + '<br/>')
+                else:
+                    formatted_lines.append('')  # 빈 줄도 유지
+
+            if formatted_lines:
+                # 한글-영문 쌍 파싱
+                kor_parts, eng_parts = parse_verse_content(formatted_lines)
+                verse_data[verse_key] = {
+                    'kor_parts': kor_parts,
+                    'eng_parts': eng_parts
+                }
+
         elif '후렴' in first_line:
-            verse_key = '후렴'
             content_lines = lines[1:]
-        else:
-            # 절 번호가 없으면 건너뜀
-            continue
-        
-        # 빈 줄 제거하고 <br/> 태그 추가 (찬송가와 동일한 형식)
-        formatted_lines = []
-        for line in content_lines:
-            if line.strip():
-                formatted_lines.append(line.strip() + '<br/>')
-        
-        if formatted_lines:
-            # 찬송가와 동일한 한글-영문 쌍 파싱 로직 적용
-            kor_parts, eng_parts = parse_verse_content(formatted_lines)
-            
-            # 각 한글-영문 쌍을 개별 슬라이드로 생성
+
+            # 빈 줄을 유지하면서 <br/> 태그 추가 (빈 줄은 슬라이드 구분자로 사용)
+            formatted_lines = []
+            for line in content_lines:
+                if line.strip():
+                    formatted_lines.append(line.strip() + '<br/>')
+                else:
+                    formatted_lines.append('')  # 빈 줄도 유지
+
+            if formatted_lines:
+                # 한글-영문 쌍 파싱
+                kor_parts, eng_parts = parse_verse_content(formatted_lines)
+                chorus_data = {
+                    'kor_parts': kor_parts,
+                    'eng_parts': eng_parts
+                }
+
+    # 총 절 수
+    total_verses = len(verse_numbers)
+    has_chorus = chorus_data is not None
+
+    # 찬송가와 동일한 방식으로 절-후렴 반복 구조 생성
+    parsed_verses = {}
+    slide_index = 0
+
+    # 절 번호를 정렬하여 순서대로 처리
+    verse_numbers.sort()
+
+    for verse_num in verse_numbers:
+        verse_key = str(verse_num)
+
+        # 절 추가
+        if verse_key in verse_data:
+            data = verse_data[verse_key]
+            kor_parts = data['kor_parts']
+            eng_parts = data['eng_parts']
             max_pairs = max(len(kor_parts), len(eng_parts))
-            
+
             for i in range(max_pairs):
                 slide_key = f"{verse_key}_{slide_index}"
                 slide_text = []
-                
+
                 # 한글 부분 추가
                 if i < len(kor_parts) and kor_parts[i].strip():
                     kor_lines = kor_parts[i].rstrip('<br/>').split('<br/>')
                     slide_text.extend(kor_lines)
-                
+
                 # 구분자 추가
                 slide_text.append('-')
-                
+
                 # 영문 부분 추가
                 if i < len(eng_parts) and eng_parts[i].strip():
                     eng_lines = eng_parts[i].rstrip('<br/>').split('<br/>')
                     slide_text.extend(eng_lines)
-                
+
                 parsed_verses[slide_key] = {
                     'text': slide_text,
                     'verse_number': verse_key,
@@ -266,9 +291,42 @@ def parse_ccm_lyrics(lyrics):
                     'total_slides_in_verse': max_pairs,
                     'total_verses': total_verses
                 }
-                
+
                 slide_index += 1
-    
+
+        # 후렴이 있으면 각 절 뒤에 후렴 추가
+        if has_chorus:
+            kor_parts = chorus_data['kor_parts']
+            eng_parts = chorus_data['eng_parts']
+            max_pairs = max(len(kor_parts), len(eng_parts))
+
+            for i in range(max_pairs):
+                slide_key = f"후렴_{slide_index}"
+                slide_text = []
+
+                # 한글 부분 추가
+                if i < len(kor_parts) and kor_parts[i].strip():
+                    kor_lines = kor_parts[i].rstrip('<br/>').split('<br/>')
+                    slide_text.extend(kor_lines)
+
+                # 구분자 추가
+                slide_text.append('-')
+
+                # 영문 부분 추가
+                if i < len(eng_parts) and eng_parts[i].strip():
+                    eng_lines = eng_parts[i].rstrip('<br/>').split('<br/>')
+                    slide_text.extend(eng_lines)
+
+                parsed_verses[slide_key] = {
+                    'text': slide_text,
+                    'verse_number': '후렴',
+                    'slide_index': i + 1,
+                    'total_slides_in_verse': max_pairs,
+                    'total_verses': total_verses
+                }
+
+                slide_index += 1
+
     return parsed_verses
 
 def has_ccm_lyrics(song_title):

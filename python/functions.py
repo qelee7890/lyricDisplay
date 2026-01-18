@@ -385,20 +385,39 @@ def parse_verse_content(verse_lines):
     """
     절의 모든 라인들을 한글-영문 쌍으로 파싱
     연속된 한글라인들과 그 다음 연속된 영문라인들을 하나의 쌍으로 처리
+    연속된 빈 줄 2개 이상은 쌍의 구분자로 사용
     """
     kor_parts = []
     eng_parts = []
-    
+
     current_korean = []
     current_english = []
-    
+
     i = 0
     while i < len(verse_lines):
         line = verse_lines[i].strip()
+
+        # 빈 줄을 만났을 때 연속된 빈 줄의 개수 확인
         if not line:
-            i += 1
+            empty_count = 0
+            # 연속된 빈 줄 개수 세기
+            j = i
+            while j < len(verse_lines) and not verse_lines[j].strip():
+                empty_count += 1
+                j += 1
+
+            # 연속된 빈 줄이 2개 이상일 때만 슬라이드 구분
+            if empty_count >= 2:
+                if current_korean or current_english:
+                    kor_parts.append(''.join(current_korean))
+                    eng_parts.append(''.join(current_english))
+                    current_korean = []
+                    current_english = []
+
+            # 빈 줄들을 모두 건너뛰기
+            i = j
             continue
-            
+
         if isUnicode(line[0], "가"):  # Korean line
             # If we were collecting English, save the previous pair
             if current_english:
@@ -406,27 +425,27 @@ def parse_verse_content(verse_lines):
                 eng_parts.append(''.join(current_english))
                 current_korean = []
                 current_english = []
-            
+
             # Collect all consecutive Korean lines
             current_korean.append(verse_lines[i])
-            
-        else:  # English line  
+
+        else:  # English line
             # Collect all consecutive English lines
             current_english.append(verse_lines[i])
-            
+
         i += 1
-    
+
     # Save the final pair
     if current_korean or current_english:
         kor_parts.append(''.join(current_korean))
         eng_parts.append(''.join(current_english))
-    
+
     # Ensure both lists have the same length
     while len(eng_parts) < len(kor_parts):
         eng_parts.append("")
     while len(kor_parts) < len(eng_parts):
         kor_parts.append("")
-        
+
     return kor_parts, eng_parts
 
 def generate_sample_presentation():
