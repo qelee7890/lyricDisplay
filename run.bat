@@ -21,13 +21,30 @@ echo [OK] Git 설치 확인됨.
 :: 2. Python 설치 확인
 python --version >NUL 2>&1
 if errorlevel 1 (
-    echo [오류] Python이 설치되어 있지 않습니다.
-    echo Python을 먼저 설치해주세요: https://www.python.org/downloads/
+    echo [오류] Python이 PATH 환경변수에 등록되어 있지 않습니다.
+    echo.
+    echo ========================================================
+    echo  가능한 원인과 해결 방법:
+    echo ========================================================
+    echo.
+    echo 1. Python이 설치되어 있지만 PATH에 등록되지 않음
+    echo    해결: Python을 다시 설치하면서 "Add Python to PATH" 체크
+    echo.
+    echo 2. Microsoft Store Python과 충돌
+    echo    해결: 설정 ^> 앱 ^> 앱 실행 별칭에서
+    echo          "앱 설치 관리자 python.exe" 끄기
+    echo.
+    echo 3. Python이 설치되어 있지 않음
+    echo    해결: Python 3.9-3.11 버전 설치 권장
+    echo          https://www.python.org/downloads/
+    echo.
+    echo ========================================================
     echo.
     pause
     exit /b 1
 )
 echo [OK] Python 설치 확인됨.
+python --version
 
 :: 3. 업데이트 여부 확인 (선택사항)
 if exist ".git" (
