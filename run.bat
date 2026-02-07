@@ -56,10 +56,16 @@ if exist ".git" (
 :: 4. 필수 패키지 설치
 echo.
 echo [진행] Python 라이브러리 설치 중...
-pip install -q Flask==2.3.3
-pip install -q Flask-SQLAlchemy==3.0.5
-pip install -q Werkzeug==2.3.7
-echo [OK] 패키지 설치 완료
+pip install -q Flask==2.3.3 Flask-SQLAlchemy==3.0.5 Werkzeug==2.3.7
+if errorlevel 1 (
+    echo [경고] 일부 패키지 설치에 실패했을 수 있습니다.
+    echo 인터넷 연결을 확인하거나 수동으로 설치해보세요:
+    echo   pip install Flask Flask-SQLAlchemy Werkzeug
+    echo.
+    pause
+) else (
+    echo [OK] 패키지 설치 완료
+)
 
 :: 5. 필수 디렉토리 생성
 if not exist "dist" mkdir dist
@@ -80,9 +86,23 @@ echo.
 :: 5초 후 브라우저 자동 열기
 start /B timeout /t 5 /nobreak >NUL && start http://127.0.0.1:5001
 
-:: Flask 실행
+:: Flask 실행 (오류 처리 추가)
 python app.py
+set EXIT_CODE=%errorlevel%
 
 echo.
-echo 앱이 종료되었습니다.
+if %EXIT_CODE% neq 0 (
+    echo ========================================================
+    echo [오류] 애플리케이션 실행 중 오류가 발생했습니다.
+    echo 종료 코드: %EXIT_CODE%
+    echo ========================================================
+    echo.
+    echo 가능한 원인:
+    echo - 포트 5001이 이미 사용 중일 수 있습니다
+    echo - Python 라이브러리 설치가 실패했을 수 있습니다
+    echo - app.py 파일에 오류가 있을 수 있습니다
+    echo.
+) else (
+    echo 앱이 정상적으로 종료되었습니다.
+)
 pause
