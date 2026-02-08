@@ -1,41 +1,40 @@
 @echo off
-chcp 65001 >NUL
-title ì°¬ì–‘ ê°€ì‚¬ ì• í”Œë¦¬ì¼€ì´ì…˜ ì‹¤í–‰
+title Âù¾ç °¡»ç ¾ÖÇÃ¸®ÄÉÀÌ¼Ç ½ÇÇà
 
 echo ========================================================
-echo  ì°¬ì–‘ ê°€ì‚¬ ì• í”Œë¦¬ì¼€ì´ì…˜ ì‹¤í–‰
+echo  Âù¾ç °¡»ç ¾ÖÇÃ¸®ÄÉÀÌ¼Ç ½ÇÇà
 echo ========================================================
 echo.
 
-:: 1. Git ì„¤ì¹˜ í™•ì¸
+:: 1. Git ¼³Ä¡ È®ÀÎ
 git --version >NUL 2>&1
 if errorlevel 1 (
-    echo [ì˜¤ë¥˜] Gitì´ ì„¤ì¹˜ë˜ì–´ ìžˆì§€ ì•ŠìŠµë‹ˆë‹¤.
-    echo Gitì„ ë¨¼ì € ì„¤ì¹˜í•´ì£¼ì„¸ìš”: https://git-scm.com/downloads
+    echo [¿À·ù] GitÀÌ ¼³Ä¡µÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.
+    echo GitÀ» ¸ÕÀú ¼³Ä¡ÇØÁÖ¼¼¿ä: https://git-scm.com/downloads
     echo.
     pause
     exit /b 1
 )
-echo [OK] Git ì„¤ì¹˜ í™•ì¸ë¨.
+echo [OK] Git ¼³Ä¡ È®ÀÎµÊ.
 
-:: 2. Python ì„¤ì¹˜ í™•ì¸
+:: 2. Python ¼³Ä¡ È®ÀÎ
 python --version >NUL 2>&1
 if errorlevel 1 (
-    echo [ì˜¤ë¥˜] Pythonì´ PATH í™˜ê²½ë³€ìˆ˜ì— ë“±ë¡ë˜ì–´ ìžˆì§€ ì•ŠìŠµë‹ˆë‹¤.
+    echo [¿À·ù] PythonÀÌ PATH È¯°æº¯¼ö¿¡ µî·ÏµÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.
     echo.
     echo ========================================================
-    echo  ê°€ëŠ¥í•œ ì›ì¸ê³¼ í•´ê²° ë°©ë²•:
+    echo  °¡´ÉÇÑ ¿øÀÎ°ú ÇØ°á ¹æ¹ý:
     echo ========================================================
     echo.
-    echo 1. Pythonì´ ì„¤ì¹˜ë˜ì–´ ìžˆì§€ë§Œ PATHì— ë“±ë¡ë˜ì§€ ì•ŠìŒ
-    echo    í•´ê²°: Pythonì„ ë‹¤ì‹œ ì„¤ì¹˜í•˜ë©´ì„œ "Add Python to PATH" ì²´í¬
+    echo 1. PythonÀÌ ¼³Ä¡µÇ¾î ÀÖÁö¸¸ PATH¿¡ µî·ÏµÇÁö ¾ÊÀ½
+    echo    ÇØ°á: PythonÀ» ´Ù½Ã ¼³Ä¡ÇÏ¸é¼­ "Add Python to PATH" Ã¼Å©
     echo.
-    echo 2. Microsoft Store Pythonê³¼ ì¶©ëŒ
-    echo    í•´ê²°: ì„¤ì • ^> ì•± ^> ì•± ì‹¤í–‰ ë³„ì¹­ì—ì„œ
-    echo          "ì•± ì„¤ì¹˜ ê´€ë¦¬ìž python.exe" ë„ê¸°
+    echo 2. Microsoft Store Python°ú Ãæµ¹
+    echo    ÇØ°á: ¼³Á¤ ^> ¾Û ^> ¾Û ½ÇÇà º°Äª¿¡¼­
+    echo          "¾Û ¼³Ä¡ °ü¸®ÀÚ python.exe" ²ô±â
     echo.
-    echo 3. Pythonì´ ì„¤ì¹˜ë˜ì–´ ìžˆì§€ ì•ŠìŒ
-    echo    í•´ê²°: Python 3.9-3.11 ë²„ì „ ì„¤ì¹˜ ê¶Œìž¥
+    echo 3. PythonÀÌ ¼³Ä¡µÇ¾î ÀÖÁö ¾ÊÀ½
+    echo    ÇØ°á: Python 3.9-3.11 ¹öÀü ¼³Ä¡ ±ÇÀå
     echo          https://www.python.org/downloads/
     echo.
     echo ========================================================
@@ -43,26 +42,26 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-echo [OK] Python ì„¤ì¹˜ í™•ì¸ë¨.
+echo [OK] Python ¼³Ä¡ È®ÀÎµÊ.
 python --version
 
-:: 3. ì—…ë°ì´íŠ¸ ì—¬ë¶€ í™•ì¸ (ì„ íƒì‚¬í•­)
+:: 3. ¾÷µ¥ÀÌÆ® ¿©ºÎ È®ÀÎ (¼±ÅÃ»çÇ×)
 if exist ".git" (
     echo.
-    echo ìµœì‹  ì½”ë“œë¡œ ì—…ë°ì´íŠ¸í•˜ì‹œê² ìŠµë‹ˆê¹Œ?
-    echo [ì£¼ì˜] ë¡œì»¬ ë³€ê²½ì‚¬í•­ì€ ëª¨ë‘ ì‚­ì œë©ë‹ˆë‹¤.
+    echo ÃÖ½Å ÄÚµå·Î ¾÷µ¥ÀÌÆ®ÇÏ½Ã°Ú½À´Ï±î?
+    echo [ÁÖÀÇ] ·ÎÄÃ º¯°æ»çÇ×Àº ¸ðµÎ »èÁ¦µË´Ï´Ù.
     echo.
-    choice /C YN /M "ì—…ë°ì´íŠ¸ë¥¼ ì§„í–‰í•˜ì‹œê² ìŠµë‹ˆê¹Œ"
+    choice /C YN /M "¾÷µ¥ÀÌÆ®¸¦ ÁøÇàÇÏ½Ã°Ú½À´Ï±î"
     if errorlevel 2 (
-        echo ì—…ë°ì´íŠ¸ë¥¼ ê±´ë„ˆëœë‹ˆë‹¤.
+        echo ¾÷µ¥ÀÌÆ®¸¦ °Ç³Ê¶Ý´Ï´Ù.
     ) else (
         echo.
-        echo [ì—…ë°ì´íŠ¸ ì‹œìž‘] ìµœì‹  ì½”ë“œë¡œ ë™ê¸°í™”í•©ë‹ˆë‹¤...
+        echo [¾÷µ¥ÀÌÆ® ½ÃÀÛ] ÃÖ½Å ÄÚµå·Î µ¿±âÈ­ÇÕ´Ï´Ù...
         git fetch origin main
         git checkout main
         git reset --hard origin/main
         git clean -fd
-        echo [ì™„ë£Œ] ì—…ë°ì´íŠ¸ ì™„ë£Œ. ìŠ¤í¬ë¦½íŠ¸ë¥¼ ë‹¤ì‹œ ì‹¤í–‰í•©ë‹ˆë‹¤...
+        echo [¿Ï·á] ¾÷µ¥ÀÌÆ® ¿Ï·á. ½ºÅ©¸³Æ®¸¦ ´Ù½Ã ½ÇÇàÇÕ´Ï´Ù...
         echo.
         pause
         start "" "%~f0"
@@ -70,56 +69,56 @@ if exist ".git" (
     )
 )
 
-:: 4. í•„ìˆ˜ íŒ¨í‚¤ì§€ ì„¤ì¹˜
+:: 4. ÇÊ¼ö ÆÐÅ°Áö ¼³Ä¡
 echo.
-echo [ì§„í–‰] Python ë¼ì´ë¸ŒëŸ¬ë¦¬ ì„¤ì¹˜ ì¤‘...
+echo [ÁøÇà] Python ¶óÀÌºê·¯¸® ¼³Ä¡ Áß...
 pip install -q Flask==2.3.3 Flask-SQLAlchemy==3.0.5 Werkzeug==2.3.7
 if errorlevel 1 (
-    echo [ê²½ê³ ] ì¼ë¶€ íŒ¨í‚¤ì§€ ì„¤ì¹˜ì— ì‹¤íŒ¨í–ˆì„ ìˆ˜ ìžˆìŠµë‹ˆë‹¤.
-    echo ì¸í„°ë„· ì—°ê²°ì„ í™•ì¸í•˜ê±°ë‚˜ ìˆ˜ë™ìœ¼ë¡œ ì„¤ì¹˜í•´ë³´ì„¸ìš”:
+    echo [°æ°í] ÀÏºÎ ÆÐÅ°Áö ¼³Ä¡¿¡ ½ÇÆÐÇßÀ» ¼ö ÀÖ½À´Ï´Ù.
+    echo ÀÎÅÍ³Ý ¿¬°áÀ» È®ÀÎÇÏ°Å³ª ¼öµ¿À¸·Î ¼³Ä¡ÇØº¸¼¼¿ä:
     echo   pip install Flask Flask-SQLAlchemy Werkzeug
     echo.
     pause
 ) else (
-    echo [OK] íŒ¨í‚¤ì§€ ì„¤ì¹˜ ì™„ë£Œ
+    echo [OK] ÆÐÅ°Áö ¼³Ä¡ ¿Ï·á
 )
 
-:: 5. í•„ìˆ˜ ë””ë ‰í† ë¦¬ ìƒì„±
+:: 5. ÇÊ¼ö µð·ºÅä¸® »ý¼º
 if not exist "dist" mkdir dist
 if not exist "dist\hymn" mkdir dist\hymn
 if not exist "dist\ccm" mkdir dist\ccm
 if not exist "dist\media" mkdir dist\media
 
-:: 6. ì•± ì‹¤í–‰
+:: 6. ¾Û ½ÇÇà
 echo.
 echo ========================================================
-echo  ì„œë²„ë¥¼ ì‹œìž‘í•©ë‹ˆë‹¤.
-echo  ë¸Œë¼ìš°ì €ì—ì„œ http://127.0.0.1:5001 ì„ ì—¬ì„¸ìš”.
+echo  ¼­¹ö¸¦ ½ÃÀÛÇÕ´Ï´Ù.
+echo  ºê¶ó¿ìÀú¿¡¼­ http://127.0.0.1:5001 À» ¿©¼¼¿ä.
 echo ========================================================
 echo.
-echo ì•± ì¢…ë£Œ: ì´ ì°½ì—ì„œ [Ctrl + C] ëˆ„ë¥´ê¸°
+echo ¾Û Á¾·á: ÀÌ Ã¢¿¡¼­ [Ctrl + C] ´©¸£±â
 echo.
 
-:: 5ì´ˆ í›„ ë¸Œë¼ìš°ì € ìžë™ ì—´ê¸°
+:: 5ÃÊ ÈÄ ºê¶ó¿ìÀú ÀÚµ¿ ¿­±â
 start /B timeout /t 5 /nobreak >NUL && start http://127.0.0.1:5001
 
-:: Flask ì‹¤í–‰ (ì˜¤ë¥˜ ì²˜ë¦¬ ì¶”ê°€)
+:: Flask ½ÇÇà (¿À·ù Ã³¸® Ãß°¡)
 python app.py
 set EXIT_CODE=%errorlevel%
 
 echo.
 if %EXIT_CODE% neq 0 (
     echo ========================================================
-    echo [ì˜¤ë¥˜] ì• í”Œë¦¬ì¼€ì´ì…˜ ì‹¤í–‰ ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.
-    echo ì¢…ë£Œ ì½”ë“œ: %EXIT_CODE%
+    echo [¿À·ù] ¾ÖÇÃ¸®ÄÉÀÌ¼Ç ½ÇÇà Áß ¿À·ù°¡ ¹ß»ýÇß½À´Ï´Ù.
+    echo Á¾·á ÄÚµå: %EXIT_CODE%
     echo ========================================================
     echo.
-    echo ê°€ëŠ¥í•œ ì›ì¸:
-    echo - í¬íŠ¸ 5001ì´ ì´ë¯¸ ì‚¬ìš© ì¤‘ì¼ ìˆ˜ ìžˆìŠµë‹ˆë‹¤
-    echo - Python ë¼ì´ë¸ŒëŸ¬ë¦¬ ì„¤ì¹˜ê°€ ì‹¤íŒ¨í–ˆì„ ìˆ˜ ìžˆìŠµë‹ˆë‹¤
-    echo - app.py íŒŒì¼ì— ì˜¤ë¥˜ê°€ ìžˆì„ ìˆ˜ ìžˆìŠµë‹ˆë‹¤
+    echo °¡´ÉÇÑ ¿øÀÎ:
+    echo - Æ÷Æ® 5001ÀÌ ÀÌ¹Ì »ç¿ë ÁßÀÏ ¼ö ÀÖ½À´Ï´Ù
+    echo - Python ¶óÀÌºê·¯¸® ¼³Ä¡°¡ ½ÇÆÐÇßÀ» ¼ö ÀÖ½À´Ï´Ù
+    echo - app.py ÆÄÀÏ¿¡ ¿À·ù°¡ ÀÖÀ» ¼ö ÀÖ½À´Ï´Ù
     echo.
 ) else (
-    echo ì•±ì´ ì •ìƒì ìœ¼ë¡œ ì¢…ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.
+    echo ¾ÛÀÌ Á¤»óÀûÀ¸·Î Á¾·áµÇ¾ú½À´Ï´Ù.
 )
 pause
