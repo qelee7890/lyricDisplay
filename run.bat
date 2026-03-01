@@ -1,125 +1,140 @@
 @echo off
-@chcp 65001 1> NUL 2> NUL
-title ?? ?? ?????? ??
+setlocal enableextensions
+
+chcp 65001 >NUL
+
+if not exist "logs" mkdir "logs"
+for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd_HHmmss"') do set "TS=%%i"
+set "LOG_FILE=logs\run_%TS%.log"
 
 echo ========================================================
-echo  ?? ?? ?????? ??
+echo  lyricDisplay launcher
 echo ========================================================
+echo [INFO] Log file: %LOG_FILE%
 echo.
 
-:: 1. Git ?? ??
-git --version >NUL 2>&1
-if errorlevel 1 (
-    echo [??] Git? ???? ?? ????.
-    echo Git? ?? ??????: https://git-scm.com/downloads
-    echo.
+call :log "Launcher started"
+
+set "PYTHON="
+where py >NUL 2>&1
+if not errorlevel 1 set "PYTHON=py -3"
+if not defined PYTHON (
+    where python >NUL 2>&1
+    if not errorlevel 1 set "PYTHON=python"
+)
+
+if not defined PYTHON (
+    echo [ERROR] Python was not found in PATH.
+    call :log "ERROR: Python not found in PATH"
     pause
     exit /b 1
 )
-echo [OK] Git ?? ???.
 
-:: 2. Python ?? ??
-python --version >NUL 2>&1
+echo [OK] Python command: %PYTHON%
+call :log "Python command resolved: %PYTHON%"
+%PYTHON% --version >> "%LOG_FILE%" 2>&1
+
+where git >NUL 2>&1
 if errorlevel 1 (
-    echo [??] Python? PATH ????? ???? ?? ????.
-    echo.
-    echo ========================================================
-    echo  ??? ??? ?? ??:
-    echo ========================================================
-    echo.
-    echo 1. Python? ???? ??? PATH? ???? ??
-    echo    ??: Python? ?? ????? "Add Python to PATH" ??
-    echo.
-    echo 2. Microsoft Store Python? ??
-    echo    ??: ?? ^> ? ^> ? ?? ????
-    echo          "? ?? ??? python.exe" ??
-    echo.
-    echo 3. Python? ???? ?? ??
-    echo    ??: Python 3.9-3.11 ?? ?? ??
-    echo          https://www.python.org/downloads/
-    echo.
-    echo ========================================================
-    echo.
+    echo [ERROR] Git was not found in PATH.
+    call :log "ERROR: Git not found in PATH"
     pause
     exit /b 1
 )
-echo [OK] Python ?? ???.
-python --version
 
-:: 3. ???? ?? ?? (????)
-if exist ".git" (
-    echo.
-    echo ?? ??? ???????????
-    echo [??] ?? ????? ?? ?????.
-    echo.
-    choice /C YN /M "????? ????????"
-    if errorlevel 2 (
-        echo ????? ?????.
-    ) else (
-        echo.
-        echo [???? ??] ?? ??? ??????...
-        git fetch origin main
-        git checkout main
-        git reset --hard origin/main
-        git clean -fd
-        echo [??] ???? ??. ????? ?? ?????...
-        echo.
+if not exist ".git" (
+    echo [ERROR] This folder is not a git repository ^(.git missing^).
+    call :log "ERROR: .git folder missing"
+    pause
+    exit /b 1
+)
+
+echo [INFO] Force syncing to origin/main...
+call :log "Running git fetch/checkout/reset/clean"
+
+git fetch origin main >> "%LOG_FILE%" 2>&1
+if errorlevel 1 (
+    echo [ERROR] git fetch failed.
+    call :log "ERROR: git fetch origin main failed"
+    pause
+    exit /b 1
+)
+
+git checkout main >> "%LOG_FILE%" 2>&1
+if errorlevel 1 (
+    echo [ERROR] git checkout main failed.
+    call :log "ERROR: git checkout main failed"
+    pause
+    exit /b 1
+)
+
+git reset --hard origin/main >> "%LOG_FILE%" 2>&1
+if errorlevel 1 (
+    echo [ERROR] git reset --hard origin/main failed.
+    call :log "ERROR: git reset --hard origin/main failed"
+    pause
+    exit /b 1
+)
+
+git clean -fd >> "%LOG_FILE%" 2>&1
+if errorlevel 1 (
+    echo [WARN] git clean -fd failed. Continuing.
+    call :log "WARN: git clean -fd failed"
+)
+
+echo [OK] Repository sync complete.
+call :log "Repository synced to origin/main"
+
+echo [INFO] Installing dependencies...
+call :log "Installing dependencies with requirements.txt"
+%PYTHON% -m pip install -q -r requirements.txt >> "%LOG_FILE%" 2>&1
+if errorlevel 1 (
+    echo [WARN] requirements install failed. Trying fallback package list...
+    call :log "WARN: requirements install failed; trying fallback list"
+    %PYTHON% -m pip install -q Flask==2.3.3 Flask-SQLAlchemy==3.0.5 Werkzeug==2.3.7 >> "%LOG_FILE%" 2>&1
+    if errorlevel 1 (
+        echo [ERROR] package installation failed.
+        call :log "ERROR: fallback package install failed"
         pause
-        start "" "%~f0"
-        exit
+        exit /b 1
     )
 )
 
-:: 4. ?? ??? ??
-echo.
-echo [??] Python ????? ?? ?...
-pip install -q Flask==2.3.3 Flask-SQLAlchemy==3.0.5 Werkzeug==2.3.7
-if errorlevel 1 (
-    echo [??] ?? ??? ??? ???? ? ????.
-    echo ??? ??? ????? ???? ??????:
-    echo   pip install Flask Flask-SQLAlchemy Werkzeug
-    echo.
-    pause
-) else (
-    echo [OK] ??? ?? ??
-)
+echo [OK] Dependencies are ready.
+call :log "Dependency installation completed"
 
-:: 5. ?? ???? ??
-if not exist "dist" mkdir dist
-if not exist "dist\hymn" mkdir dist\hymn
-if not exist "dist\ccm" mkdir dist\ccm
-if not exist "dist\media" mkdir dist\media
+if not exist "dist" mkdir "dist"
+if not exist "dist\hymn" mkdir "dist\hymn"
+if not exist "dist\ccm" mkdir "dist\ccm"
+if not exist "dist\media" mkdir "dist\media"
+call :log "Ensured dist directories exist"
 
-:: 6. ? ??
 echo.
 echo ========================================================
-echo  ??? ?????.
-echo  ?????? http://127.0.0.1:5001 ? ???.
+echo  Starting server at http://127.0.0.1:5001
 echo ========================================================
-echo.
-echo ? ??: ? ??? [Ctrl + C] ???
+echo Press Ctrl + C in this window to stop.
 echo.
 
-:: 5? ? ???? ?? ??
-start /B timeout /t 5 /nobreak >NUL && start http://127.0.0.1:5001
+start "" /B powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 3; Start-Process 'http://127.0.0.1:5001'"
+call :log "Browser opener scheduled"
 
-:: Flask ?? (?? ?? ??)
-python app.py
-set EXIT_CODE=%errorlevel%
+call :log "Starting app.py"
+%PYTHON% app.py >> "%LOG_FILE%" 2>&1
+set "EXIT_CODE=%ERRORLEVEL%"
 
-echo.
-if %EXIT_CODE% neq 0 (
-    echo ========================================================
-    echo [??] ?????? ?? ? ??? ??????.
-    echo ?? ??: %EXIT_CODE%
-    echo ========================================================
-    echo.
-    echo ??? ??:
-    echo - ?? 5001? ?? ?? ?? ? ????
-    echo - Python ????? ??? ???? ? ????
-    echo - app.py ??? ??? ?? ? ????
-    echo.
+if not "%EXIT_CODE%"=="0" (
+    echo [ERROR] Application stopped with exit code %EXIT_CODE%.
+    call :log "ERROR: app.py exited with code %EXIT_CODE%"
 ) else (
-    echo ?? ????? ???????.
+    echo [INFO] Application exited normally.
+    call :log "app.py exited normally"
 )
+
+echo [INFO] Detailed logs saved to: %LOG_FILE%
 pause
+exit /b %EXIT_CODE%
+
+:log
+>> "%LOG_FILE%" echo [%date% %time%] %~1
+exit /b 0
