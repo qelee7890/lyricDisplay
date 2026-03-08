@@ -65,7 +65,7 @@ class PraisePost(db.Model):
 class Song(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    song_type = db.Column(db.String(50), nullable=False)  # 'hymn', 'ccm', 'section', 'media'
+    song_type = db.Column(db.String(50), nullable=False)  # 'hymn', 'ccm', 'section', 'media', 'blank'
     hymn_number = db.Column(db.String(10))  # 찬송가 번호
     lyrics = db.Column(db.Text)  # 가사
     order = db.Column(db.Integer, nullable=False)

@@ -85,6 +85,10 @@
                         </section>
                     {% endif %}
 
+                {% elif song.song_type == 'blank' %}
+                    <!-- 빈 페이지: 텍스트 없이 패럴랙스 배경만 표시 -->
+                    <section data-transition="none"></section>
+
 
                 {% elif song.song_type == 'hymn' %}
                     <!-- 찬송가 -->

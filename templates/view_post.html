@@ -60,6 +60,8 @@
                                             <i class="fas fa-list me-2"></i>
                                         {% elif song.song_type == 'media' %}
                                             <i class="fas fa-play me-2"></i>
+                                        {% elif song.song_type == 'blank' %}
+                                            <i class="fas fa-square me-2"></i>
                                         {% else %}
                                             <i class="fas fa-music me-2"></i>
                                         {% endif %}
@@ -91,6 +93,8 @@
                                         <span class="badge bg-warning">찬양 목록</span>
                                     {% elif song.song_type == 'media' %}
                                         <span class="badge bg-danger">미디어</span>
+                                    {% elif song.song_type == 'blank' %}
+                                        <span class="badge bg-secondary">빈 페이지</span>
                                     {% else %}
                                         <span class="badge bg-secondary">기타</span>
                                     {% endif %}

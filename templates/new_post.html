@@ -42,6 +42,9 @@
                             <button type="button" class="btn btn-outline-info" onclick="addMedia()">
                                 <i class="fas fa-image"></i> 미디어 추가
                             </button>
+                            <button type="button" class="btn btn-outline-dark ms-2" onclick="addBlankPage()">
+                                <i class="fas fa-square"></i> 빈 페이지 추가
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -515,6 +518,15 @@ function addCCM(title) {
     addSongToList(song);
 }
 
+function addBlankPage() {
+    const song = {
+        title: '빈 페이지',
+        type: 'blank',
+        lyrics: ''
+    };
+    addSongToList(song);
+}
+
 function addSongToList(song) {
     songs.push(song);
     updateSongList();
@@ -544,6 +556,9 @@ function updateSongList() {
         } else if (song.type === 'media') {
             icon = song.media_type === 'video' ? 'video' : 'image';
             typeText = `[${song.media_type === 'video' ? '동영상' : '이미지'}] `;
+        } else if (song.type === 'blank') {
+            icon = 'square';
+            typeText = '[빈 페이지] ';
         }
         
         html += `<div class="list-group-item d-flex justify-content-between align-items-center sortable-item" data-index="${index}">
